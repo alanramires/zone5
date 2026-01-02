@@ -57,7 +57,7 @@ namespace Zone5
                 count: blueCount,
                 basePos: new Vector2(-teamSeparationX * 0.5f, blueYOffset),
                 teamId: 0,
-                zRotation: 270f,
+                
                 color: GameEnum.GameColors.TeamBlue,
                 unitData: unitDataBlue
             );
@@ -66,7 +66,7 @@ namespace Zone5
                 count: redCount,
                 basePos: new Vector2(+teamSeparationX * 0.5f, redYOffset),
                 teamId: 1,
-                zRotation: 90f,
+                
                 color: GameEnum.GameColors.TeamRed,
                 unitData: unitDataRed
             );
@@ -76,7 +76,7 @@ namespace Zone5
             int count,
             Vector2 basePos,
             int teamId,
-            float zRotation,
+           
             Color color,
             UnitProfile unitData
         )
@@ -96,7 +96,10 @@ namespace Zone5
                 Color softColor = GetSoftTeamColor(color);
                 unit.ApplyUnitData(unitData, softColor, playerId, teamId);
 
-                unit.transform.rotation = Quaternion.Euler(0f, 0f, zRotation);
+                // Blue nasce apontando pra direita, Red pra esquerda (pra se encararem)
+                Vector3 desired = (teamId == 0) ? Vector3.right : Vector3.left;
+                OrientUnit(unit, desired);
+
 
                 CreateSpawnTrail(unit, color);
             }
@@ -169,5 +172,25 @@ namespace Zone5
             #endif
             }
         }
+
+        // Orients the unit to face the desired forward direction.
+        private static void OrientUnit(AircraftUnit unit, Vector3 desiredForward)
+        {
+            if (unit == null) return;
+            desiredForward.z = 0f;
+            desiredForward.Normalize();
+
+            Vector3 currentForward = (unit.NoseAnchor.position - unit.ExhaustAnchor.position);
+            currentForward.z = 0f;
+
+            if (currentForward.sqrMagnitude < 0.000001f)
+                currentForward = unit.transform.up; // fallback
+
+            currentForward.Normalize();
+
+            Quaternion rotDelta = Quaternion.FromToRotation(currentForward, desiredForward);
+            unit.transform.rotation = rotDelta * unit.transform.rotation;
+        }
+
     }
 }

@@ -19,7 +19,9 @@ namespace Zone5
 
         [Header("Refs")]
         [SerializeField] private SpriteRenderer spriteRenderer;
-        public Transform exhaustAnchor;
+        public Transform ExhaustL;
+        public Transform ExhaustR;
+        [SerializeField] private Transform exhaustAnchor; // opcional (meio)
         [SerializeField] private Transform noseAnchor;
 
         [Header("Trails")]
