@@ -23,6 +23,7 @@ namespace Zone5
 
         [Header("Trails")]
         public List<LineRenderer> trailSegments = new List<LineRenderer>();
+        public List<LineRenderer> debugTrailSegments = new List<LineRenderer>();
 
         private void Reset()
         {
@@ -69,6 +70,13 @@ namespace Zone5
             trailSegments.Add(lr);
         }
 
+        public void AddDebugTrail(LineRenderer lr)
+        {
+            if (lr == null) return;
+            if (debugTrailSegments == null) debugTrailSegments = new List<LineRenderer>();
+            debugTrailSegments.Add(lr);
+        }
+
         public void ClearTrails()
         {
             if (trailSegments == null) return;
@@ -83,9 +91,24 @@ namespace Zone5
             trailSegments.Clear();
         }
 
+        public void ClearDebugTrails()
+        {
+            if (debugTrailSegments == null) return;
+
+            for (int i = debugTrailSegments.Count - 1; i >= 0; i--)
+            {
+                var lr = debugTrailSegments[i];
+                if (lr != null)
+                    Destroy(lr.gameObject);
+            }
+
+            debugTrailSegments.Clear();
+        }
+
         public void Die()
         {
             ClearTrails();
+            ClearDebugTrails();
             Destroy(gameObject);
         }
 

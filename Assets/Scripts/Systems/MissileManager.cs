@@ -14,6 +14,10 @@ namespace Zone5
         [Header("Refs")]
         public TrailManager trailManager;
 
+        [Header("Hitbox Overlay (Game View)")]
+        public bool showHitboxes = false;     // default false
+
+
         [Header("Visual")]
         public Transform missilesRoot;
         public Color missileColor = Color.white;
@@ -23,6 +27,15 @@ namespace Zone5
         [Header("Gameplay (MVP test)")]
         [Min(0.1f)] public float defaultRangeFU = 10f; // Phoenix / R-27
         public MissileProfile defaultProfile;          // opcional, se quiser usar profile já
+
+        [Header("Collision (MVP)")]
+        [Tooltip("Raio do hitbox do caça em Fighter Units (FU). Independe do sprite.")]
+        [Range(0.10f, 1.00f)] public float aircraftHitRadiusFU = 0.30f;
+        [Tooltip("Raio do mÇðssil em FU. Soma no raio do aviÇœo (hit mais intuitivo).")]
+        [Range(0f, 0.50f)] public float missileRadiusFU = 0.08f;
+        [Tooltip("Se true, desenha linhas debug do teste de colisão por alguns segundos.")]
+        public bool debugCollision = true;
+        public float debugLineSeconds = 2f;
 
         private float _savedTrailWidth;
 
@@ -44,7 +57,7 @@ namespace Zone5
             if (red  != null) FireFromAircraft(red,  teamId: 1, pathRaw: redPathRaw);
         }
 
-        public void FireFromAircraft(AircraftUnit shooter, int teamId, string pathRaw = "M10F")
+        public void FireFromAircraft(AircraftUnit shooter, int teamId, string pathRaw = null)
         {
             if (missilePrefab == null)
             {
@@ -61,6 +74,8 @@ namespace Zone5
                 Debug.LogError("[MissileManager] shooter or its ExhaustL/ExhaustR is null.");
                 return;
             }
+            if (string.IsNullOrWhiteSpace(pathRaw))
+                return;
 
             // --- 1) Spawn missile object ---
             Transform parent = missilesRoot != null ? missilesRoot : transform;
@@ -146,11 +161,51 @@ namespace Zone5
                 DrawMissileSegment(missile, smoothPts[i], smoothPts[i + 1], missileColor);
             }
 
-            // (MVP) coloca o missil no final
-            Vector3 end = smoothPts[smoothPts.Length - 1];
-            missile.transform.position += (end - start);
-        }
+            // --- 4) Colisão ao longo do caminho (MVP) ---
+            var target = FindTeamUnit(teamId == 0 ? 1 : 0);
+            bool hit = false;
+            if (target != null)
+            {
+                float debugSeconds = debugLineSeconds;
+                var dbg = FindFirstObjectByType<DebugManager>();
+                if (dbg == null && !debugCollision)
+                    debugSeconds = 0f;
 
+                hit = CheckMissilePathHitAircraft(
+                    smoothPts, target,
+                    aircraftHitRadiusFU, missileRadiusFU,
+                    fuWorld,
+                    debugSeconds);
+                if (hit)
+                {
+                    Debug.Log($"[Missile] HIT along path! shooterTeam={teamId} target={target.unitId} path={pathRaw}");
+
+                    // MVP: por enquanto só log. Amanhã: rodar dodge + aplicar missileDamage se falhar.
+                    // Você pode também mudar a cor do trail ou piscar o alvo aqui.
+                }
+
+            }
+
+            // (MVP) coloca o missil no final
+            start = missile.transform.position;
+            Vector3 end = smoothPts[smoothPts.Length - 1];
+            Vector3 finalPos = start + (end - start); // (mesmo que end, mas deixa explicito)
+            missile.transform.position = finalPos;
+
+            // check extra: posicao final do missil tambem pode colidir
+            if (target != null && !hit)
+            {
+                hit = CheckMissileFinalHitAircraft(
+                    missile.transform.position,
+                    target,
+                    aircraftHitRadiusFU,
+                    missileRadiusFU,
+                    fuWorld);
+                if (hit)
+                    Debug.Log($"[Missile] HIT at final position! shooter={shooter.name} target={target.name}");
+            }
+
+        }
         public void ClearMissiles()
         {
             for (int i = _activeMissiles.Count - 1; i >= 0; i--)
@@ -199,6 +254,36 @@ namespace Zone5
             lr.SetPosition(1, end);
 
             missile.AddTrail(lr);
+
+            // debug trail (orange, 25% opacity) - separado do trail visual
+            var dbgGo = new GameObject($"MissileTrailDbg_{id}_{index}");
+            dbgGo.transform.SetParent(parent, false);
+
+            var dbgLr = dbgGo.AddComponent<LineRenderer>();
+            dbgLr.useWorldSpace = true;
+            dbgLr.positionCount = 2;
+            var dbg = FindFirstObjectByType<DebugManager>();
+            float widthMul = dbg != null ? dbg.GetTrailHitboxWidthMultiplier() : 1f;
+            dbgLr.startWidth = missileTrailWidth;
+            dbgLr.endWidth = missileTrailWidth;
+            dbgLr.widthMultiplier = widthMul;
+            dbgLr.sortingLayerName = "FX";
+            dbgLr.sortingOrder = 999;
+
+            if (trailManager.lineMaterial != null)
+                dbgLr.material = new Material(trailManager.lineMaterial);
+
+            Color dbgColor = new Color(1f, 0.5f, 0f, 0.5f);
+            dbgLr.startColor = dbgColor;
+            dbgLr.endColor = dbgColor;
+            if (dbgLr.material != null) dbgLr.material.color = dbgColor;
+
+            dbgLr.SetPosition(0, start);
+            dbgLr.SetPosition(1, end);
+
+            dbgLr.enabled = dbg != null && dbg.toggleAllDebugsVisible && dbg.trailHitboxAlongsidePath;
+
+            missile.AddDebugTrail(dbgLr);
         }
 
         private static AircraftUnit FindTeamUnit(int teamId)
@@ -323,7 +408,204 @@ namespace Zone5
                 (-p0 + 3f * p1 - 3f * p2 + p3) * t3
             );
         }
+
+        private static bool CheckMissilePathHitAircraft(
+            Vector3[] missilePts,
+            AircraftUnit target,
+            float hitRadiusFU,
+            float missileRadiusFU,
+            float fallbackFuWorld,
+            float debugSeconds = 0f)
+        {
+            if (missilePts == null || missilePts.Length < 2) return false;
+            if (target == null || target.NoseAnchor == null || target.ExhaustAnchor == null) return false;
+
+            Vector3 A = target.ExhaustAnchor.position; A.z = 0f;
+            Vector3 B = target.NoseAnchor.position;    B.z = 0f;
+
+            // 1 FU do alvo (melhor do que usar o shooter)
+            float fuWorldTarget = Mathf.Max(0.01f, Vector3.Distance(A, B));
+            if (fuWorldTarget <= 0.00001f) fuWorldTarget = Mathf.Max(0.01f, fallbackFuWorld);
+
+            float missileRadiusWorld = missileRadiusFU * fuWorldTarget; // mesma rÇ¸gua FU do alvo (ok pro MVP)
+            float radiusWorld = (hitRadiusFU * fuWorldTarget) + missileRadiusWorld;
+
+            var dbg = FindFirstObjectByType<DebugManager>();
+            bool useManager = dbg != null;
+            bool master = useManager ? dbg.toggleAllDebugsVisible : (debugSeconds > 0f);
+            bool showTrail = useManager ? (master && dbg.trailHitboxAlongsidePath) : (debugSeconds > 0f);
+            bool showCollision = useManager ? (master && dbg.collisionDetectedCircle) : (debugSeconds > 0f);
+            float drawSeconds = (showTrail || showCollision) ? debugSeconds : 0f;
+
+            if (showCollision && drawSeconds > 0f)
+            {
+                DebugDrawCapsule2D(A, B, radiusWorld, Color.magenta, drawSeconds);
+            }
+
+            UpdateAircraftHitboxDebug(target, radiusWorld, showCollision);
+
+
+            for (int i = 0; i < missilePts.Length - 1; i++)
+            {
+                Vector3 P = missilePts[i];     P.z = 0f;
+                Vector3 Q = missilePts[i + 1]; Q.z = 0f;
+
+                float d = MinDistanceSegmentToSegment2D(A, B, P, Q);
+
+                if (showTrail && drawSeconds > 0f)
+                {
+                    // linha do segmento do míssil
+                    Debug.DrawLine(P, Q, Color.white, drawSeconds);
+                }
+
+                if (d <= radiusWorld)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static bool CheckMissileFinalHitAircraft(
+            Vector3 missilePos,
+            AircraftUnit target,
+            float aircraftHitRadiusFU,
+            float missileRadiusFU,
+            float fuWorld)
+        {
+            if (target == null || target.ExhaustAnchor == null || target.NoseAnchor == null) return false;
+
+            // A-B = "espinha" do aviao
+            Vector3 A = target.ExhaustAnchor.position; A.z = 0f;
+            Vector3 B = target.NoseAnchor.position;    B.z = 0f;
+            Vector3 P = missilePos;                    P.z = 0f;
+
+            float radiusWorld = (aircraftHitRadiusFU + missileRadiusFU) * fuWorld;
+
+            float d = DistancePointToSegment(P, A, B);
+            return d <= radiusWorld;
+        }
+
+        // distancia de um ponto P ao segmento AB
+        private static float DistancePointToSegment(Vector3 P, Vector3 A, Vector3 B)
+        {
+            Vector3 AB = B - A;
+            float ab2 = Vector3.Dot(AB, AB);
+            if (ab2 <= 1e-6f) return Vector3.Distance(P, A);
+
+            float t = Vector3.Dot(P - A, AB) / ab2;
+            t = Mathf.Clamp01(t);
+            Vector3 Q = A + t * AB;
+            return Vector3.Distance(P, Q);
+        }
+
+        /// Menor distância entre dois segmentos em 2D: AB (avião) e PQ (míssil).
+        private static float MinDistanceSegmentToSegment2D(Vector3 A, Vector3 B, Vector3 P, Vector3 Q)
+        {
+            // Se qualquer segmento for degenerado, cai para distância ponto-segmento
+            if ((B - A).sqrMagnitude < 1e-8f) return DistancePointToSegment2D(A, P, Q);
+            if ((Q - P).sqrMagnitude < 1e-8f) return DistancePointToSegment2D(P, A, B);
+
+            // Se intersecta, distância = 0
+            if (SegmentsIntersect2D(A, B, P, Q)) return 0f;
+
+            // Caso contrário, menor das distâncias ponto->segmento
+            float d1 = DistancePointToSegment2D(A, P, Q);
+            float d2 = DistancePointToSegment2D(B, P, Q);
+            float d3 = DistancePointToSegment2D(P, A, B);
+            float d4 = DistancePointToSegment2D(Q, A, B);
+
+            return Mathf.Min(Mathf.Min(d1, d2), Mathf.Min(d3, d4));
+        }
+
+        private static float DistancePointToSegment2D(Vector3 point, Vector3 a, Vector3 b)
+        {
+            Vector3 ab = b - a; ab.z = 0f;
+            Vector3 ap = point - a; ap.z = 0f;
+
+            float abLen2 = ab.sqrMagnitude;
+            if (abLen2 < 1e-8f) return (point - a).magnitude;
+
+            float t = Mathf.Clamp01(Vector3.Dot(ap, ab) / abLen2);
+            Vector3 proj = a + t * ab;
+            return (point - proj).magnitude;
+        }
+
+        private static bool SegmentsIntersect2D(Vector3 a, Vector3 b, Vector3 c, Vector3 d)
+        {
+            // orientação (cross) em 2D
+            float o1 = Cross2D(b - a, c - a);
+            float o2 = Cross2D(b - a, d - a);
+            float o3 = Cross2D(d - c, a - c);
+            float o4 = Cross2D(d - c, b - c);
+
+            // interseção geral
+            if ((o1 > 0f && o2 < 0f || o1 < 0f && o2 > 0f) &&
+                (o3 > 0f && o4 < 0f || o3 < 0f && o4 > 0f))
+                return true;
+
+            // casos colineares (tolerância pequena)
+            const float eps = 1e-6f;
+            if (Mathf.Abs(o1) < eps && OnSegment2D(a, b, c)) return true;
+            if (Mathf.Abs(o2) < eps && OnSegment2D(a, b, d)) return true;
+            if (Mathf.Abs(o3) < eps && OnSegment2D(c, d, a)) return true;
+            if (Mathf.Abs(o4) < eps && OnSegment2D(c, d, b)) return true;
+
+            return false;
+        }
+
+        private static void DebugDrawCapsule2D(Vector3 A, Vector3 B, float radius, Color c, float seconds)
+        {
+            Vector3 ab = (B - A); ab.z = 0f;
+            Vector3 dir = ab.sqrMagnitude > 1e-6f ? ab.normalized : Vector3.up;
+
+            // normal 2D (perp)
+            Vector3 n = new Vector3(-dir.y, dir.x, 0f);
+
+            Vector3 A1 = A + n * radius;
+            Vector3 A2 = A - n * radius;
+            Vector3 B1 = B + n * radius;
+            Vector3 B2 = B - n * radius;
+
+            // "retangulo" central da capsula
+            Debug.DrawLine(A1, B1, c, seconds);
+            Debug.DrawLine(A2, B2, c, seconds);
+            Debug.DrawLine(A1, A2, c, seconds);
+            Debug.DrawLine(B1, B2, c, seconds);
+
+            // "circulos" nas pontas (aproximados com 12 segmentos)
+            const int seg = 12;
+            for (int i = 0; i < seg; i++)
+            {
+                float t0 = (i / (float)seg) * Mathf.PI * 2f;
+                float t1 = ((i + 1) / (float)seg) * Mathf.PI * 2f;
+
+                Vector3 o0 = new Vector3(Mathf.Cos(t0), Mathf.Sin(t0), 0f) * radius;
+                Vector3 o1 = new Vector3(Mathf.Cos(t1), Mathf.Sin(t1), 0f) * radius;
+
+                Debug.DrawLine(A + o0, A + o1, c, seconds);
+                Debug.DrawLine(B + o0, B + o1, c, seconds);
+            }
+        }
+
+        private static float Cross2D(Vector3 u, Vector3 v) => u.x * v.y - u.y * v.x;
+
+        private static bool OnSegment2D(Vector3 a, Vector3 b, Vector3 p)
+        {
+            return p.x >= Mathf.Min(a.x, b.x) - 1e-6f &&
+                   p.x <= Mathf.Max(a.x, b.x) + 1e-6f &&
+                   p.y >= Mathf.Min(a.y, b.y) - 1e-6f &&
+                   p.y <= Mathf.Max(a.y, b.y) + 1e-6f;
+        }
+
+        private static void UpdateAircraftHitboxDebug(AircraftUnit target, float radiusWorld, bool show)
+        {
+            if (target == null) return;
+            var dbg = target.GetComponentInChildren<Zone5.CollisionDebugView>(true);
+            if (dbg == null) return;
+
+            dbg.SetRadiusWorld(radiusWorld);
+            dbg.SetVisible(show);
+        }
+
     }
 }
-
-
