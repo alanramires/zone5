@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.5 - evasao, dano e colisao entre aeronaves
+
+- Rolagem de evasao (d4) por manobra e aplicacao de dano no hit
+- Colisao entre aeronaves (MVP) com morte simultanea
+
 ## 0.0.4 - debug center, colisao de misseis e hitbox tools
 
 - DebugManager centralizado com toggles de hitboxes, trails e modos de espessura

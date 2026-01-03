@@ -23,6 +23,9 @@ namespace Zone5
         [Header("Debug")]
         public bool logAlsoCards = true;
 
+        [Header("Collision (MVP)")]
+        [Range(0.10f, 1.00f)] public float aircraftHitRadiusFU = 0.10f;
+
         // Endpoint “persistente” por unidade (pra conectar no próximo turno)
         private readonly Dictionary<AircraftUnit, Vector3> lastEndByUnit = new();
 
@@ -68,6 +71,8 @@ namespace Zone5
                 missileManager = FindFirstObjectByType<MissileManager>();
             missileManager?.ClearMissiles();
 
+            var killedPairs = new HashSet<string>();
+
             var blueUnit = FindTeamUnit(0);
             var redUnit  = FindTeamUnit(1);
 
@@ -89,8 +94,29 @@ namespace Zone5
             ManeuverDef redM  = ManeuverCatalog.Resolve(redRaw);
 
             // Move e desenha (por enquanto só reta via distanceFU)
-            if (blueUnit != null) ExecuteManeuver(blueUnit, blueM, blueDir, GameEnum.GameColors.TeamBlue);
-            if (redUnit  != null) ExecuteManeuver(redUnit,  redM,  redDir,  GameEnum.GameColors.TeamRed);
+            if (blueUnit != null)
+            {
+                blueUnit.lastManeuverRaw = string.IsNullOrWhiteSpace(blueRaw) ? blueM.id : blueRaw;
+                ExecuteManeuver(blueUnit, blueM, blueDir, GameEnum.GameColors.TeamBlue);
+            }
+            if (redUnit != null)
+            {
+                redUnit.lastManeuverRaw = string.IsNullOrWhiteSpace(redRaw) ? redM.id : redRaw;
+                ExecuteManeuver(redUnit, redM, redDir, GameEnum.GameColors.TeamRed);
+            }
+
+            var aircrafts = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None);
+            for (int i = 0; i < aircrafts.Length; i++)
+            {
+                var a = aircrafts[i];
+                if (a == null) continue;
+                for (int j = i + 1; j < aircrafts.Length; j++)
+                {
+                    var b = aircrafts[j];
+                    if (b == null) continue;
+                    CheckAircraftCollision(a, b, killedPairs);
+                }
+            }
 
             // PÓS-MVP (2 cartas):
             // Em vez de Resolve() (que pega 1 só), use ManeuverCatalog.ParseCombo("1G18+1G18")
@@ -345,6 +371,31 @@ namespace Zone5
             Vector3 newAL = unit.ExhaustL.position;
             Vector3 delta = targetL - newAL;
             unit.transform.position += delta;
+        }
+
+        private void CheckAircraftCollision(AircraftUnit a, AircraftUnit b, HashSet<string> killedPairs)
+        {
+            if (a == null || b == null) return;
+            if (a.currentHp <= 0 || b.currentHp <= 0) return;
+            var srA = a.GetComponentInChildren<SpriteRenderer>();
+            var srB = b.GetComponentInChildren<SpriteRenderer>();
+            if (srA == null || srB == null) return;
+
+            string nameA = string.IsNullOrEmpty(a.unitId) ? a.name : a.unitId;
+            string nameB = string.IsNullOrEmpty(b.unitId) ? b.name : b.unitId;
+            string key = string.CompareOrdinal(nameA, nameB) <= 0 ? $"{nameA}|{nameB}" : $"{nameB}|{nameA}";
+            if (killedPairs != null && killedPairs.Contains(key)) return;
+
+            Bounds boundsA = srA.bounds;
+            Bounds boundsB = srB.bounds;
+            if (boundsA.Intersects(boundsB))
+            {
+                Debug.Log($"[Collision] Aircraft collision: {nameA} vs {nameB}");
+                Debug.Log($"[Collision] Aeronaves abatidas por colisao: {nameA} e {nameB}");
+                if (killedPairs != null) killedPairs.Add(key);
+               // a.Die();
+               // b.Die();
+            }
         }
 
 

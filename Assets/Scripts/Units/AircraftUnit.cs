@@ -16,6 +16,7 @@ namespace Zone5
         public int currentHp;
         public int currentFuel;
         public int currentMissiles;
+        public string lastManeuverRaw;
 
         [Header("Refs")]
         [SerializeField] private SpriteRenderer spriteRenderer;

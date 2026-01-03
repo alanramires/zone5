@@ -31,8 +31,12 @@ namespace Zone5
         [Header("Collision (MVP)")]
         [Tooltip("Raio do hitbox do caça em Fighter Units (FU). Independe do sprite.")]
         [Range(0.10f, 1.00f)] public float aircraftHitRadiusFU = 0.30f;
-        [Tooltip("Raio do mÇðssil em FU. Soma no raio do aviÇœo (hit mais intuitivo).")]
+        [Tooltip("Raio do míssil em FU. Soma no raio do avião (hit mais intuitivo).")]
         [Range(0f, 0.50f)] public float missileRadiusFU = 0.08f;
+        [Tooltip("Dot minimo para contar hit (missil precisa estar se aproximando do alvo).")]
+        [Range(-1f, 1f)] public float missileApproachDotThreshold = 0.1f;
+        [Tooltip("Arming distance em FU: ignora os primeiros X FU do path.")]
+        [Min(0f)] public float missileArmingDistanceFU = 0.25f;
         [Tooltip("Se true, desenha linhas debug do teste de colisão por alguns segundos.")]
         public bool debugCollision = true;
         public float debugLineSeconds = 2f;
@@ -84,6 +88,7 @@ namespace Zone5
 
             // aplica profile (se tiver), senão fica só branco mesmo
             MissileProfile profile = defaultProfile;
+            int missileDamage = (profile != null) ? profile.missileDamage : 3;
 
             Color teamColor = (teamId == 0) ? GameEnum.GameColors.TeamBlue : GameEnum.GameColors.TeamRed;
 
@@ -175,10 +180,13 @@ namespace Zone5
                     smoothPts, target,
                     aircraftHitRadiusFU, missileRadiusFU,
                     fuWorld,
-                    debugSeconds);
+                    debugSeconds,
+                    missileApproachDotThreshold,
+                    missileArmingDistanceFU);
                 if (hit)
                 {
                     Debug.Log($"[Missile] HIT along path! shooterTeam={teamId} target={target.unitId} path={pathRaw}");
+                    ApplyEvasionRoll(target, missileDamage, shooter.name);
 
                     // MVP: por enquanto só log. Amanhã: rodar dodge + aplicar missileDamage se falhar.
                     // Você pode também mudar a cor do trail ou piscar o alvo aqui.
@@ -202,7 +210,10 @@ namespace Zone5
                     missileRadiusFU,
                     fuWorld);
                 if (hit)
+                {
                     Debug.Log($"[Missile] HIT at final position! shooter={shooter.name} target={target.name}");
+                    ApplyEvasionRoll(target, missileDamage, shooter.name);
+                }
             }
 
         }
@@ -415,7 +426,9 @@ namespace Zone5
             float hitRadiusFU,
             float missileRadiusFU,
             float fallbackFuWorld,
-            float debugSeconds = 0f)
+            float debugSeconds = 0f,
+            float approachDotThreshold = 0f,
+            float armingDistanceFU = 0f)
         {
             if (missilePts == null || missilePts.Length < 2) return false;
             if (target == null || target.NoseAnchor == null || target.ExhaustAnchor == null) return false;
@@ -429,6 +442,9 @@ namespace Zone5
 
             float missileRadiusWorld = missileRadiusFU * fuWorldTarget; // mesma rÇ¸gua FU do alvo (ok pro MVP)
             float radiusWorld = (hitRadiusFU * fuWorldTarget) + missileRadiusWorld;
+            Vector3 targetCenter = (A + B) * 0.5f;
+            float armingDistanceWorld = Mathf.Max(0f, armingDistanceFU) * Mathf.Max(0.01f, fallbackFuWorld);
+            float traveled = 0f;
 
             var dbg = FindFirstObjectByType<DebugManager>();
             bool useManager = dbg != null;
@@ -449,6 +465,36 @@ namespace Zone5
             {
                 Vector3 P = missilePts[i];     P.z = 0f;
                 Vector3 Q = missilePts[i + 1]; Q.z = 0f;
+
+                float segLen = Vector3.Distance(P, Q);
+                traveled += segLen;
+                if (armingDistanceWorld > 0f && traveled < armingDistanceWorld)
+                {
+                    if (debugSeconds > 0f)
+                    {
+                        float distFU = traveled / Mathf.Max(0.01f, fallbackFuWorld);
+                        Debug.Log($"[Missile] skip segment: arming (distFU={distFU:0.00})");
+                    }
+                    continue;
+                }
+
+                Vector3 missileDir = (Q - P); missileDir.z = 0f;
+                if (missileDir.sqrMagnitude < 1e-8f)
+                    continue;
+                missileDir.Normalize();
+
+                Vector3 toTarget = (targetCenter - P); toTarget.z = 0f;
+                if (toTarget.sqrMagnitude < 1e-8f)
+                    continue;
+                toTarget.Normalize();
+
+                float dot = Vector3.Dot(missileDir, toTarget);
+                if (dot <= approachDotThreshold)
+                {
+                    if (debugSeconds > 0f)
+                        Debug.Log($"[Missile] skip segment: not approaching (dot={dot:0.00})");
+                    continue;
+                }
 
                 float d = MinDistanceSegmentToSegment2D(A, B, P, Q);
 
@@ -496,6 +542,44 @@ namespace Zone5
             t = Mathf.Clamp01(t);
             Vector3 Q = A + t * AB;
             return Vector3.Distance(P, Q);
+        }
+
+        private static void ApplyEvasionRoll(AircraftUnit target, int missileDamage, string shooterName)
+        {
+            if (target == null) return;
+
+            ManeuverDef m = ManeuverCatalog.Resolve(target.lastManeuverRaw);
+            int dice = Mathf.Max(0, m.evasionPenalty);
+            if (dice == 0)
+            {
+                Debug.Log($"[Missile] Evade roll target={target.unitId} maneuver={m.id} dice=0 dmg=0 hp={target.currentHp}");
+                return;
+            }
+
+            int fails = 0;
+            int successes = 0;
+            int[] rolls = new int[dice];
+            for (int i = 0; i < dice; i++)
+            {
+                int roll = UnityEngine.Random.Range(1, 5); // d4
+                rolls[i] = roll;
+                if (roll <= 2) fails++;
+                else successes++;
+            }
+
+            int damage = fails * missileDamage;
+            int hpBefore = target.currentHp;
+            int hpAfter = Mathf.Max(0, hpBefore - damage);
+            target.currentHp = hpAfter;
+
+            string rollStr = string.Join(",", rolls);
+            Debug.Log($"[Missile] Evade roll target={target.unitId} maneuver={m.id} dice={dice} rolls=[{rollStr}] fail={fails} success={successes} dmg={damage} hp {hpBefore}->{hpAfter}");
+            if (hpAfter == 0)
+            {
+                string targetName = !string.IsNullOrEmpty(target.unitId) ? target.unitId : target.name;
+                Debug.Log($"[Missile] Aeronave {targetName} abatida por {shooterName}");
+               // target.Die();
+            }
         }
 
         /// Menor distância entre dois segmentos em 2D: AB (avião) e PQ (míssil).
