@@ -44,6 +44,9 @@ TagManager:
   - name: Background
     uniqueID: 2110100689
     locked: 0
+  - name: Trails
+    uniqueID: 1364608799
+    locked: 0
   - name: Units
     uniqueID: 491739103
     locked: 0

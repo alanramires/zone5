@@ -11,10 +11,14 @@ namespace Zone5
         [Header("UI")]
         public TMP_InputField blueInput;
         public TMP_InputField redInput;
+        public TMP_InputField blueMissileInput;
+        public TMP_InputField redMissileInput;
         public Button sendButton;
+        public Button fireButton;
 
         [Header("Refs")]
         public TrailManager trailManager;
+        public MissileManager missileManager;
 
         [Header("Debug")]
         public bool logAlsoCards = true;
@@ -27,6 +31,9 @@ namespace Zone5
             if (sendButton != null)
                 sendButton.onClick.AddListener(OnSend);
 
+            if (fireButton != null)
+                fireButton.onClick.AddListener(OnFire);
+
             if (blueInput != null) blueInput.onSubmit.AddListener(_ => OnSend());
             if (redInput != null)  redInput.onSubmit.AddListener(_ => OnSend());
         }
@@ -37,6 +44,12 @@ namespace Zone5
                 trailManager = FindFirstObjectByType<TrailManager>();
 
             CacheLastEnds();
+
+            if (blueMissileInput != null && string.IsNullOrWhiteSpace(blueMissileInput.text))
+                blueMissileInput.text = "M10F";
+
+            if (redMissileInput != null && string.IsNullOrWhiteSpace(redMissileInput.text))
+                redMissileInput.text = "M10F";
         }
 
         private void CacheLastEnds()
@@ -51,6 +64,10 @@ namespace Zone5
 
         private void OnSend()
         {
+            if (missileManager == null)
+                missileManager = FindFirstObjectByType<MissileManager>();
+            missileManager?.ClearMissiles();
+
             var blueUnit = FindTeamUnit(0);
             var redUnit  = FindTeamUnit(1);
 
@@ -78,6 +95,17 @@ namespace Zone5
             // PÓS-MVP (2 cartas):
             // Em vez de Resolve() (que pega 1 só), use ManeuverCatalog.ParseCombo("1G18+1G18")
             // e execute em sequência encadeando endpoints (guardando o endpoint intermediário).
+        }
+
+        private void OnFire()
+        {
+            if (missileManager == null)
+                missileManager = FindFirstObjectByType<MissileManager>();
+
+            string blueCode = blueMissileInput ? blueMissileInput.text : "M10F";
+            string redCode  = redMissileInput  ? redMissileInput.text  : "M10F";
+
+            missileManager?.FireTestBoth(blueCode, redCode);
         }
 
         private AircraftUnit FindTeamUnit(int teamId)
@@ -322,6 +350,7 @@ namespace Zone5
 
     }
 }
+
 
 
 
