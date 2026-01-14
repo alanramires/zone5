@@ -4,30 +4,42 @@ namespace Zone5
 {
     public class CollisionDebugView : MonoBehaviour
     {
-        [SerializeField] private Transform visualRoot;
-        [SerializeField] private float radiusWorld = 1f;
+        [Header("Debug")]
+        public bool show = false;                 // default false (como você quer)
+        public SpriteRenderer view;              // arrasta o HitboxView aqui
 
-        public void SetRadiusWorld(float radius)
+        [Header("Shape")]
+        [Tooltip("Raio em unidades de mundo (não FU).")]
+        public float radiusWorld = 1f;
+
+        [Tooltip("Se true, mostra como círculo (escala uniforme). Se false, pode virar cápsula/retângulo depois.")]
+        public bool uniformScale = true;
+
+        void Reset()
         {
-            radiusWorld = Mathf.Max(0f, radius);
-            ApplyScale();
+            view = GetComponentInChildren<SpriteRenderer>();
         }
 
-        public void SetVisible(bool show)
+        void LateUpdate()
         {
-            gameObject.SetActive(show);
+            if (view == null) return;
+
+            view.enabled = show;
+
+            if (!show) return;
+
+            // Assumindo que seu sprite é um círculo/quadrado "unitário" (1 unidade = diâmetro 1).
+            // Então diâmetro = 2 * radius.
+            float diameter = Mathf.Max(0.001f, radiusWorld * 2f);
+
+            if (uniformScale)
+                view.transform.localScale = new Vector3(diameter, diameter, 1f);
+            else
+                view.transform.localScale = new Vector3(diameter, diameter, 1f);
         }
 
-        private void Awake()
-        {
-            ApplyScale();
-        }
+        public void SetVisible(bool value) => show = value;
 
-        private void ApplyScale()
-        {
-            Transform root = visualRoot != null ? visualRoot : transform;
-            float d = radiusWorld * 2f;
-            root.localScale = new Vector3(d, d, 1f);
-        }
+        public void SetRadiusWorld(float r) => radiusWorld = Mathf.Max(0.001f, r);
     }
 }

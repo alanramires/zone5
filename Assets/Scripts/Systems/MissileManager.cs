@@ -39,7 +39,7 @@ namespace Zone5
         [Min(0f)] public float missileArmingDistanceFU = 0.25f;
         [Tooltip("Se true, desenha linhas debug do teste de colisão por alguns segundos.")]
         public bool debugCollision = true;
-        public float debugLineSeconds = 2f;
+        public float debugLineSeconds = 5f;
 
         private float _savedTrailWidth;
 
@@ -510,7 +510,7 @@ namespace Zone5
 
             return false;
         }
-
+        
         private static bool CheckMissileFinalHitAircraft(
             Vector3 missilePos,
             AircraftUnit target,
@@ -544,41 +544,53 @@ namespace Zone5
             return Vector3.Distance(P, Q);
         }
 
-        private static void ApplyEvasionRoll(AircraftUnit target, int missileDamage, string shooterName)
+        [Header("Refs")]
+        public TurnManager turnManager; // Added ref
+
+        // ...
+
+        private void ApplyEvasionRoll(AircraftUnit target, int missileDamage, string shooterName)
         {
             if (target == null) return;
 
-            ManeuverDef m = ManeuverCatalog.Resolve(target.lastManeuverRaw);
-            int dice = Mathf.Max(0, m.evasionPenalty);
-            if (dice == 0)
+            // Ensure we have TurnManager
+            if (turnManager == null) turnManager = FindFirstObjectByType<TurnManager>();
+
+            if (MvpRules.IsMvp)
             {
-                Debug.Log($"[Missile] Evade roll target={target.unitId} maneuver={m.id} dice=0 dmg=0 hp={target.currentHp}");
+                int roll = UnityEngine.Random.Range(1, 5); // d4
+                string targetName = !string.IsNullOrEmpty(target.unitId) ? target.unitId : target.name;
+                // MVP Evasion Logic: Roll 1-2 = HIT, 3-4 = MISS
+                if (roll <= 2)
+                {
+                    target.currentHp = 0;
+                    Debug.Log($"[Missile][MVP] Evade roll {roll} => HIT. Target down: {targetName} by {shooterName}");
+                    target.Die();
+                    
+                    if (turnManager != null) 
+                        turnManager.SetAlive(target.playerId, false);
+                }
+                else
+                {
+                    Debug.Log($"[Missile][MVP] Evade roll {roll} => EVADE. Target safe: {targetName}");
+                }
                 return;
             }
 
-            int fails = 0;
-            int successes = 0;
-            int[] rolls = new int[dice];
-            for (int i = 0; i < dice; i++)
-            {
-                int roll = UnityEngine.Random.Range(1, 5); // d4
-                rolls[i] = roll;
-                if (roll <= 2) fails++;
-                else successes++;
-            }
-
-            int damage = fails * missileDamage;
-            int hpBefore = target.currentHp;
+            // ... (Legacy logic can remain, but ideally should also sync death if HP=0)
+            ManeuverDef m = ManeuverCatalog.Resolve(target.LastManeuver);
+            // ...
             int hpAfter = Mathf.Max(0, hpBefore - damage);
             target.currentHp = hpAfter;
 
-            string rollStr = string.Join(",", rolls);
-            Debug.Log($"[Missile] Evade roll target={target.unitId} maneuver={m.id} dice={dice} rolls=[{rollStr}] fail={fails} success={successes} dmg={damage} hp {hpBefore}->{hpAfter}");
             if (hpAfter == 0)
             {
                 string targetName = !string.IsNullOrEmpty(target.unitId) ? target.unitId : target.name;
                 Debug.Log($"[Missile] Aeronave {targetName} abatida por {shooterName}");
-               // target.Die();
+                target.Die();
+                
+                if (turnManager != null) 
+                    turnManager.SetAlive(target.playerId, false);
             }
         }
 

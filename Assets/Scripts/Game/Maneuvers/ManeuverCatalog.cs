@@ -6,7 +6,7 @@ namespace Zone5
 {
     public static class ManeuverCatalog
     {
-        public const string DefaultId = "1G18F";
+        public const string DefaultId = "1G12F";
 
         // Lista “fonte da verdade”
         public static readonly List<ManeuverDef> All = new()

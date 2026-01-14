@@ -12,11 +12,23 @@ namespace Zone5
         public int teamId;
         public string unitId;
         public string callSign;
+        public int playerId;
 
         public int currentHp;
         public int currentFuel;
         public int currentMissiles;
-        public string lastManeuverRaw;
+        [System.Serializable]
+        public struct FlightLog
+        {
+            public int TurnIndex;
+            public string ManeuverCode; // "3G06"
+            public float Speed;         // 1.0
+            public int GForce;          // 3
+            public string RawInput;     // "448"
+        }
+
+        public List<FlightLog> maneuverHistory = new List<FlightLog>();
+        public string LastManeuver => (maneuverHistory != null && maneuverHistory.Count > 0) ? maneuverHistory[maneuverHistory.Count - 1].ManeuverCode : "";
 
         [Header("Refs")]
         [SerializeField] private SpriteRenderer spriteRenderer;
@@ -37,6 +49,7 @@ namespace Zone5
         {
             unitData = data;
             teamId = team;
+            this.playerId = playerId;
 
             if (data == null)
             {
@@ -44,13 +57,15 @@ namespace Zone5
                 return;
             }
 
-            if (spriteRenderer != null && data.spriteDefault != null)
+            if (spriteRenderer != null)
             {
-                spriteRenderer.sprite = data.spriteDefault;
+                if (data.spriteDefault != null)
+                    spriteRenderer.sprite = data.spriteDefault;
+                
                 spriteRenderer.color = teamColor;
             }
 
-            currentHp = data.maxHp;
+            currentHp = MvpRules.IsMvp ? 1 : data.maxHp;
             currentFuel = data.maxFuel;
             currentMissiles = data.missilesMax;
 
@@ -58,7 +73,6 @@ namespace Zone5
             {
                 unitId = $"{data.unitName}_P{playerId}_T{teamId}";
             }
-
             gameObject.name = unitId;
         }
 
@@ -93,5 +107,6 @@ namespace Zone5
 
         public Transform ExhaustAnchor => exhaustAnchor != null ? exhaustAnchor : transform;
         public Transform NoseAnchor => noseAnchor != null ? noseAnchor : transform;
+        public UnitProfile UnitData => unitData;
     }
 }

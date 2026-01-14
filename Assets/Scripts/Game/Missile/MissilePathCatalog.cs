@@ -11,20 +11,21 @@ namespace Zone5
         // O alcance real vem do MissileProfile.rangeFU.
         public static readonly List<MissilePathDef> All = new()
         {
-            new MissilePathDef {
-                id="M10F", name="Straight", mode=MissilePathMode.PointList,
-                // reta no centro
-                pointsNorm=new() { new(0f,0f), new(1f,0f) },
-                endHeadingSameAsStart=true,
-                aliases=new[]{ "M10F","10F","F","STRAIGHT","RETA","MISSILE","MISSIL" }
-            },
 
             // Machine Gun (no seu design é “reta também”, quem limita é o profile (rangeFU=5) e/ou scale do token)
             new MissilePathDef {
                 id="M10MG", name="Machine Gun (Straight)", mode=MissilePathMode.PointList,
                 pointsNorm=new() { new(0f,0f), new(1f,0f) },
                 endHeadingSameAsStart=true,
-                aliases=new[]{ "M10MG","MG","GUN","MACHINEGUN","METRALHADORA" }
+                aliases=new[]{ "M10MG","MG","GUN","MACHINEGUN","METRALHADORA","M0","0" }
+            },
+
+            new MissilePathDef {
+                id="M10F", name="Straight", mode=MissilePathMode.PointList,
+                // reta no centro
+                pointsNorm=new() { new(0f,0f), new(1f,0f) },
+                endHeadingSameAsStart=true,
+                aliases=new[]{ "M10F","10F","F","STRAIGHT","RETA","MISSILE","MISSIL","M1","1" }
             },
 
             // Curvas (terminam retas, só deslocam lateralmente o endpoint)
@@ -41,7 +42,7 @@ namespace Zone5
                     new(1f, +0.22f),
                 },
                 endHeadingSameAsStart=true,
-                aliases=new[]{ "M10L1","10L1","L1","LEFT1","ESQ1","LEVEESQ","LEVE L" }
+                aliases=new[]{ "M10L1","10L1","L1","LEFT1","ESQ1","LEVEESQ","LEVE L","2" }
             },
             new MissilePathDef {
                 id="M10L2", name="Curve Left (Strong)", mode=MissilePathMode.PointList,
@@ -54,7 +55,7 @@ namespace Zone5
                     new(1f, +0.38f),
                 },
                 endHeadingSameAsStart=true,
-                aliases=new[]{ "M10L2","10L2","L2","LEFT2","ESQ2","FORTEESQ","FORTE L" }
+                aliases=new[]{ "M10L2","10L2","L2","LEFT2","ESQ2","FORTEESQ","FORTE L","3" }
             },
             new MissilePathDef {
                 id="M10R1", name="Curve Right (Light)", mode=MissilePathMode.PointList,
@@ -67,7 +68,7 @@ namespace Zone5
                     new(1f, -0.22f),
                 },
                 endHeadingSameAsStart=true,
-                aliases=new[]{ "M10R1","10R1","R1","RIGHT1","DIR1","LEVEDIR","LEVE R" }
+                aliases=new[]{ "M10R1","10R1","R1","RIGHT1","DIR1","LEVEDIR","LEVE R","4" }
             },
             new MissilePathDef {
                 id="M10R2", name="Curve Right (Strong)", mode=MissilePathMode.PointList,
@@ -80,7 +81,7 @@ namespace Zone5
                     new(1f, -0.38f),
                 },
                 endHeadingSameAsStart=true,
-                aliases=new[]{ "M10R2","10R2","R2","RIGHT2","DIR2","FORTEDIR","FORTE R" }
+                aliases=new[]{ "M10R2","10R2","R2","RIGHT2","DIR2","FORTEDIR","FORTE R","5" }
             },
 
             // ZigZag / S (termina reto, com deslocamento final diferente)
@@ -90,32 +91,59 @@ namespace Zone5
                 id="M10S1", name="ZigZag (Light)", mode=MissilePathMode.PointList,
                 pointsNorm=new()
                 {
-                    new(0f, 0f),
-                    new(0.15f, 0f),      // lead-in
-                    new(0.35f, +0.18f),
-                    new(0.60f, -0.10f),
-                    new(0.80f, -0.10f),
-                    new(1f, -0.10f),
+                    // START RETO
+                    new(0.00f, 0.00f),
+                    new(0.10f, 0.00f),
+                    new(0.18f, 0.00f),
+
+                    // ONDA 1 (pico grande -> vale)
+                    new(0.30f, +0.22f),
+                    new(0.40f, +0.08f),
+                    new(0.52f, -0.18f),
+
+                    // ONDA 2 (pico menor -> volta a descer)
+                    new(0.64f, -0.02f),
+                    new(0.72f, +0.10f),
+                    new(0.80f, +0.04f),
+                    new(0.86f, -0.04f),
+
+                    // END RETO (importante ter 2-3 pontos em y=0)
+                    new(0.92f, 0.00f),
+                    new(0.96f, 0.00f),
+                    new(1.00f, 0.00f),
                 },
                 endHeadingSameAsStart=true,
-                aliases=new[]{ "M10S1","10S1","S1","ZIG1","ZIGZAG1","S-LEVE","ZIG-LEVE" }
+                aliases=new[]{ "M10S1","10S1","S1","ZIG1","ZIGZAG1","S-LEVE","ZIG-LEVE","6" }
             },
+
             new MissilePathDef {
                 id="M10S2", name="ZigZag (Strong)", mode=MissilePathMode.PointList,
                 pointsNorm=new()
                 {
-                    new(0f, 0f),
-                    new(0.15f, 0f),      // lead-in
-                    new(0.35f, +0.32f),
-                    new(0.60f, -0.20f),
-                    new(0.80f, -0.20f),
-                    new(1f, -0.20f),
+                    // START RETO
+                    new(0.00f, 0.00f),
+                    new(0.10f, 0.00f),
+                    new(0.18f, 0.00f),
+
+                    // PICO GRANDE
+                    new(0.32f, +0.34f),
+                    new(0.44f, +0.12f),
+
+                    // VALE FUNDO
+                    new(0.58f, -0.28f),
+
+                    // SUBIDA LONGA (vai “acalmando” até ficar reto)
+                    new(0.72f, -0.18f),
+                    new(0.84f, -0.08f),
+
+                    // END RETO
+                    new(0.92f, 0.00f),
+                    new(0.96f, 0.00f),
+                    new(1.00f, 0.00f),
                 },
                 endHeadingSameAsStart=true,
-                aliases=new[]{ "M10S2","10S2","S2","ZIG2","ZIGZAG2","S-FORTE","ZIG-FORTE" }
-            },
-
-        };
+                aliases=new[]{ "M10S2","10S2","S2","ZIG2","ZIGZAG2","S-FORTE","ZIG-FORTE","7" }
+            };
 
         private static Dictionary<string, MissilePathDef> _byAlias;
         private static Dictionary<string, MissilePathDef> ByAlias => _byAlias ??= BuildIndex();

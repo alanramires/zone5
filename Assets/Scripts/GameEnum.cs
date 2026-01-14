@@ -51,6 +51,18 @@ namespace Zone5
             public static readonly Color TeamRed    = new Color(255f / 255f, 155f / 255f, 155f / 255f);
             public static readonly Color TeamGreen  = new Color(144f / 255f, 238f / 255f, 144f / 255f);
             public static readonly Color TeamYellow = new Color(255f / 255f, 246f / 255f, 141f / 255f);
+
+            public static Color GetColorForTeam(int teamId)
+            {
+                return teamId switch
+                {
+                    0 => TeamBlue,
+                    1 => TeamRed,
+                    2 => TeamGreen,
+                    3 => TeamYellow,
+                    _ => Color.white // fallback
+                };
+            }
         }
 
         // Armas do MVP/Avançado

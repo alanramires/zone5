@@ -28,6 +28,7 @@ namespace Zone5
 
         // Endpoint “persistente” por unidade (pra conectar no próximo turno)
         private readonly Dictionary<AircraftUnit, Vector3> lastEndByUnit = new();
+        private readonly Dictionary<AircraftUnit, List<Segment>> turnSegmentsByUnit = new();
 
         private void Awake()
         {
@@ -71,6 +72,7 @@ namespace Zone5
                 missileManager = FindFirstObjectByType<MissileManager>();
             missileManager?.ClearMissiles();
 
+            ClearTurnSegments();
             var killedPairs = new HashSet<string>();
 
             var blueUnit = FindTeamUnit(0);
@@ -81,6 +83,9 @@ namespace Zone5
 
             string blueRaw = blueInput ? blueInput.text : "";
             string redRaw  = redInput  ? redInput.text  : "";
+
+            blueRaw = MvpRules.SanitizeManeuver(blueRaw);
+            redRaw = MvpRules.SanitizeManeuver(redRaw);
 
             TurnDir blueDir = ParseDirFromRaw(blueRaw);
             TurnDir redDir  = ParseDirFromRaw(redRaw);
@@ -93,30 +98,26 @@ namespace Zone5
             ManeuverDef blueM = ManeuverCatalog.Resolve(blueRaw);
             ManeuverDef redM  = ManeuverCatalog.Resolve(redRaw);
 
-            // Move e desenha (por enquanto só reta via distanceFU)
+            // Move e desenha
             if (blueUnit != null)
             {
-                blueUnit.lastManeuverRaw = string.IsNullOrWhiteSpace(blueRaw) ? blueM.id : blueRaw;
+                string validRaw = string.IsNullOrWhiteSpace(blueRaw) ? blueM.id : blueRaw;
+                int g = 1; if (validRaw.Length > 0 && char.IsDigit(validRaw[0])) int.TryParse(validRaw[0].ToString(), out g);
+                blueUnit.maneuverHistory.Add(new AircraftUnit.FlightLog { TurnIndex = 99, ManeuverCode = validRaw, RawInput = validRaw, GForce = g, Speed = 1f });
                 ExecuteManeuver(blueUnit, blueM, blueDir, GameEnum.GameColors.TeamBlue);
             }
             if (redUnit != null)
             {
-                redUnit.lastManeuverRaw = string.IsNullOrWhiteSpace(redRaw) ? redM.id : redRaw;
+                string validRaw = string.IsNullOrWhiteSpace(redRaw) ? redM.id : redRaw;
+                int g = 1; if (validRaw.Length > 0 && char.IsDigit(validRaw[0])) int.TryParse(validRaw[0].ToString(), out g);
+                redUnit.maneuverHistory.Add(new AircraftUnit.FlightLog { TurnIndex = 99, ManeuverCode = validRaw, RawInput = validRaw, GForce = g, Speed = 1f });
                 ExecuteManeuver(redUnit, redM, redDir, GameEnum.GameColors.TeamRed);
             }
 
-            var aircrafts = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None);
-            for (int i = 0; i < aircrafts.Length; i++)
-            {
-                var a = aircrafts[i];
-                if (a == null) continue;
-                for (int j = i + 1; j < aircrafts.Length; j++)
-                {
-                    var b = aircrafts[j];
-                    if (b == null) continue;
-                    CheckAircraftCollision(a, b, killedPairs);
-                }
-            }
+            if (MvpRules.IsMvp)
+                CheckPathCollisions(killedPairs);
+            else
+                CheckBoundsCollisions(killedPairs);
 
             // PÓS-MVP (2 cartas):
             // Em vez de Resolve() (que pega 1 só), use ManeuverCatalog.ParseCombo("1G18+1G18")
@@ -149,8 +150,8 @@ namespace Zone5
             if (!lastEndByUnit.TryGetValue(unit, out Vector3 start))
                 start = unit.ExhaustAnchor != null ? unit.ExhaustAnchor.position : unit.transform.position;
 
-            float fuWorld = GetFUWorld(unit);
-            Vector3 forward = GetForward(unit);
+            float fuWorld = MovementCore.GetFUWorld(unit);
+            Vector3 forward = MovementCore.GetForward(unit);
 
             Color strongColor = GetStrongTeamColor(teamColor);
 
@@ -161,8 +162,9 @@ namespace Zone5
                 Vector3 end = start + forward * (distFU * fuWorld);
 
                 trailManager.CreateSegment(unit, start, end, strongColor);
+                AddTurnSegment(unit, start, end);
 
-                AlignAndTeleportToEnd(unit, start, end, forward);
+                MovementCore.AlignAndTeleportToEnd(unit, start, end, forward);
                 lastEndByUnit[unit] = end;
                 return;
             }
@@ -182,17 +184,18 @@ namespace Zone5
                 {
                     Vector3 endStraight = p0 + forward0 * totalDist;
                     trailManager.CreateSegment(unit, p0, endStraight, strongColor);
-                    AlignAndTeleportToEnd(unit, p0, endStraight, forward0);
+                    AddTurnSegment(unit, p0, endStraight);
+                    MovementCore.AlignAndTeleportToEnd(unit, p0, endStraight, forward0);
                     lastEndByUnit[unit] = endStraight;
                     return;
                 }
 
                 // Arc center and endpoint based on total arc length.
                 float radius = totalDist / Mathf.Abs(thetaRad);
-                Vector3 right0 = Rotate2D(forward0, -90f).normalized;
+                Vector3 right0 = MovementCore.Rotate2D(forward0, -90f).normalized;
                 float thetaSign = Mathf.Sign(thetaRad);
                 Vector3 center = p0 - right0 * (radius * thetaSign);
-                Vector3 p2 = center + Rotate2D(p0 - center, theta);
+                Vector3 p2 = center + MovementCore.Rotate2D(p0 - center, theta);
 
                 int steps = Mathf.Max(16, Mathf.CeilToInt(Mathf.Abs(theta) / 5f));
                 Vector3 prev = p0;
@@ -200,46 +203,34 @@ namespace Zone5
                 {
                     float t = i / (float)steps;
                     float angDeg = theta * t;
-                    Vector3 pt = center + Rotate2D(p0 - center, angDeg);
+                    Vector3 pt = center + MovementCore.Rotate2D(p0 - center, angDeg);
                     trailManager.CreateSegment(unit, prev, pt, strongColor);
+                    AddTurnSegment(unit, prev, pt);
                     prev = pt;
                 }
+                Vector3 endDir = MovementCore.Rotate2D(forward0, theta).normalized;
 
-                // Tangent direction at the end of the arc.
-                Vector3 endDir = Rotate2D(forward0, theta).normalized;
-
-                // Width of the exhaust bar (ExhaustL -> ExhaustR).
-                float width = 0.5f * fuWorld; // fallback
+                float width = 0.5f * fuWorld;
                 if (unit.ExhaustL != null && unit.ExhaustR != null)
                     width = Vector3.Distance(unit.ExhaustL.position, unit.ExhaustR.position);
 
-                // Right direction based on the two exhausts.
                 Vector3 airRight = (unit.ExhaustR.position - unit.ExhaustL.position);
                 airRight.z = 0f;
-
                 if (airRight.sqrMagnitude < 0.000001f)
-                    airRight = Rotate2D(endDir, -90f); // fallback
-
+                    airRight = MovementCore.Rotate2D(endDir, -90f);
                 airRight.Normalize();
 
-                // End right based on the final heading.
-                Vector3 endRight = Rotate2D(endDir, -90f).normalized; // -90 = right em Unity 2D
-                // Keep endRight on the same side as airRight.
+                Vector3 endRight = MovementCore.Rotate2D(endDir, -90f).normalized;
                 if (Vector3.Dot(endRight, airRight) < 0f) endRight = -endRight;
 
                 Vector3 targetL = p2 - endRight * (width * 0.5f);
                 Vector3 targetR = p2 + endRight * (width * 0.5f);
 
+                MovementCore.MagnetAlignByTwoAnchors(unit, targetL, targetR);
 
-                // aplica alinhamento por dois anchors (ExhaustL/ExhaustR)
-                MagnetAlignByTwoAnchors(unit, targetL, targetR);
-
-                // 6) Pos-ima: garantir que o NARIZ aponta pro tangente final (endDir)
-                //    sem perder o encaixe do ExhaustAnchor no endpoint.
                 Vector3 exhaustPinned = (unit.ExhaustAnchor != null) ? unit.ExhaustAnchor.position : unit.transform.position;
 
-                // forward real do aviao (nariz -> bunda)
-                Vector3 fwdNow = GetForward(unit);
+                Vector3 fwdNow = MovementCore.GetForward(unit);
                 fwdNow.z = 0f;
                 endDir.z = 0f;
 
@@ -248,39 +239,15 @@ namespace Zone5
                     Quaternion rotToEnd = Quaternion.FromToRotation(fwdNow.normalized, endDir.normalized);
                     unit.transform.rotation = rotToEnd * unit.transform.rotation;
 
-                    // recoloca pra manter o exhaust preso no mesmo ponto
                     Vector3 exhaustAfter = (unit.ExhaustAnchor != null) ? unit.ExhaustAnchor.position : unit.transform.position;
                     unit.transform.position += (exhaustPinned - exhaustAfter);
                 }
 
-                // Persist endpoint after magnet align.
                 lastEndByUnit[unit] = (unit.ExhaustAnchor != null) ? unit.ExhaustAnchor.position : p2;
-
-                return;
-        
             }
-
-
-            // === POINT LIST (pós-MVP) ===
-            // (deixa quieto por enquanto)
         }
 
 
-        private static float GetFUWorld(AircraftUnit unit)
-        {
-            if (unit.NoseAnchor == null || unit.ExhaustAnchor == null) return 1f;
-            return Mathf.Max(0.01f, Vector3.Distance(unit.NoseAnchor.position, unit.ExhaustAnchor.position));
-        }
-
-        private static Vector3 GetForward(AircraftUnit unit)
-        {
-            if (unit.NoseAnchor != null && unit.ExhaustAnchor != null)
-            {
-                Vector3 v = unit.NoseAnchor.position - unit.ExhaustAnchor.position;
-                if (v.sqrMagnitude > 0.000001f) return v.normalized;
-            }
-            return unit.transform.up.normalized;
-        }
 
         private static Color GetStrongTeamColor(Color baseColor)
         {
@@ -310,68 +277,7 @@ namespace Zone5
             };
         }
 
-        private static Vector3 Rotate2D(Vector3 v, float degrees)
-        {
-            float rad = degrees * Mathf.Deg2Rad;
-            float cos = Mathf.Cos(rad);
-            float sin = Mathf.Sin(rad);
-            return new Vector3(
-                v.x * cos - v.y * sin,
-                v.x * sin + v.y * cos,
-                v.z
-            );
-        }
 
-        private static Vector3 BezierQuad(Vector3 p0, Vector3 p1, Vector3 p2, float t)
-        {
-            float u = 1f - t;
-            return (u * u) * p0 + (2f * u * t) * p1 + (t * t) * p2;
-        }
-
-        private void AlignAndTeleportToEnd(AircraftUnit unit, Vector3 start, Vector3 end, Vector3 currentForward, Vector3? desiredForward = null)
-        {
-            Vector3 dir = desiredForward ?? (end - start).normalized;
-            if (dir.sqrMagnitude > 0.000001f)
-            {
-                Quaternion rotDelta = Quaternion.FromToRotation(currentForward, dir);
-                unit.transform.rotation = rotDelta * unit.transform.rotation;
-            }
-
-            Vector3 exhaustNow = unit.ExhaustAnchor != null ? unit.ExhaustAnchor.position : unit.transform.position;
-            Vector3 deltaPos = end - exhaustNow;
-            unit.transform.position += deltaPos;
-        }
-        
-        // Alinha o avião usando os dois pontos de exaustão (se existirem)
-        private void MagnetAlignByTwoAnchors(AircraftUnit unit, Vector3 targetL, Vector3 targetR)
-        {
-            if (unit.ExhaustL == null || unit.ExhaustR == null) return;
-
-            Vector3 aL = unit.ExhaustL.position;
-            Vector3 aR = unit.ExhaustR.position;
-
-            Vector3 vA = (aR - aL);
-            Vector3 vB = (targetR - targetL);
-
-            vA.z = 0f; vB.z = 0f;
-            if (vA.sqrMagnitude < 0.000001f || vB.sqrMagnitude < 0.000001f) return;
-
-            // ✅ anti-inversão: se o alvo veio invertido, troca targetL/targetR
-            if (Vector3.Dot(vA, vB) < 0f)
-            {
-                (targetL, targetR) = (targetR, targetL);
-                vB = (targetR - targetL);
-                vB.z = 0f;
-            }
-
-            Quaternion rotDelta = Quaternion.FromToRotation(vA, vB);
-            unit.transform.rotation = rotDelta * unit.transform.rotation;
-
-            // cola o L certinho
-            Vector3 newAL = unit.ExhaustL.position;
-            Vector3 delta = targetL - newAL;
-            unit.transform.position += delta;
-        }
 
         private void CheckAircraftCollision(AircraftUnit a, AircraftUnit b, HashSet<string> killedPairs)
         {
@@ -393,10 +299,95 @@ namespace Zone5
                 Debug.Log($"[Collision] Aircraft collision: {nameA} vs {nameB}");
                 Debug.Log($"[Collision] Aeronaves abatidas por colisao: {nameA} e {nameB}");
                 if (killedPairs != null) killedPairs.Add(key);
-               // a.Die();
-               // b.Die();
+                a.Die();
+                b.Die();
             }
         }
+
+
+
+        private void ClearTurnSegments()
+        {
+            turnSegmentsByUnit.Clear();
+        }
+
+        private void AddTurnSegment(AircraftUnit unit, Vector3 start, Vector3 end)
+        {
+            if (unit == null) return;
+            if (!turnSegmentsByUnit.TryGetValue(unit, out var list))
+            {
+                list = new List<Segment>();
+                turnSegmentsByUnit[unit] = list;
+            }
+            list.Add(new Segment(start, end));
+        }
+
+        private void CheckPathCollisions(HashSet<string> killedPairs)
+        {
+            var aircrafts = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None);
+            for (int i = 0; i < aircrafts.Length; i++)
+            {
+                var a = aircrafts[i];
+                if (a == null || a.currentHp <= 0) continue;
+                for (int j = i + 1; j < aircrafts.Length; j++)
+                {
+                    var b = aircrafts[j];
+                    if (b == null || b.currentHp <= 0) continue;
+                    if (HasPathCollision(a, b))
+                    {
+                        string nameA = string.IsNullOrEmpty(a.unitId) ? a.name : a.unitId;
+                        string nameB = string.IsNullOrEmpty(b.unitId) ? b.name : b.unitId;
+                        string key = string.CompareOrdinal(nameA, nameB) <= 0 ? $"{nameA}|{nameB}" : $"{nameB}|{nameA}";
+                        if (killedPairs != null && killedPairs.Contains(key)) continue;
+                        Debug.Log($"[Collision][MVP] Path collision: {nameA} vs {nameB}");
+                        if (killedPairs != null) killedPairs.Add(key);
+                        a.currentHp = 0;
+                        b.currentHp = 0;
+                        a.Die();
+                        b.Die();
+                    }
+                }
+            }
+        }
+
+        private void CheckBoundsCollisions(HashSet<string> killedPairs)
+        {
+            var aircrafts = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None);
+            for (int i = 0; i < aircrafts.Length; i++)
+            {
+                var a = aircrafts[i];
+                if (a == null) continue;
+                for (int j = i + 1; j < aircrafts.Length; j++)
+                {
+                    var b = aircrafts[j];
+                    if (b == null) continue;
+                    CheckAircraftCollision(a, b, killedPairs);
+                }
+            }
+        }
+
+        private bool HasPathCollision(AircraftUnit a, AircraftUnit b)
+        {
+            if (a == null || b == null) return false;
+            if (!turnSegmentsByUnit.TryGetValue(a, out var segA) || segA.Count == 0) return false;
+            if (!turnSegmentsByUnit.TryGetValue(b, out var segB) || segB.Count == 0) return false;
+
+            float radiusA = aircraftHitRadiusFU * MovementCore.GetFUWorld(a);
+            float radiusB = aircraftHitRadiusFU * MovementCore.GetFUWorld(b);
+            float combined = radiusA + radiusB;
+
+            for (int i = 0; i < segA.Count; i++)
+            {
+                for (int j = 0; j < segB.Count; j++)
+                {
+                    float d = CollisionSystem.MinDistanceSegmentToSegment2D(segA[i].a, segA[i].b, segB[j].a, segB[j].b);
+                    if (d <= combined) return true;
+                }
+            }
+            return false;
+        }
+
+
 
 
     }
