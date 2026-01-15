@@ -4,6 +4,18 @@ using UnityEngine;
 
 namespace Zone5
 {
+    // Data struct for the separated phases
+    public class MissileTransaction
+    {
+        public AircraftUnit Shooter;
+        public int TeamId;
+        public string PathRaw;
+        public Vector3[] SmoothPts;
+        public GameObject MissileObject;
+        public float FuWorld;
+        public int Damage;
+    }
+
     public class MissileManager : MonoBehaviour
     {
         private readonly System.Collections.Generic.List<MissileUnit> _activeMissiles = new();
@@ -57,40 +69,40 @@ namespace Zone5
             var blue = FindTeamUnit(0);
             var red  = FindTeamUnit(1);
 
-            if (blue != null) FireFromAircraft(blue, teamId: 0, pathRaw: bluePathRaw);
-            if (red  != null) FireFromAircraft(red,  teamId: 1, pathRaw: redPathRaw);
+            if (blue != null) SpawnMissile(blue, teamId: 0, pathRaw: bluePathRaw);
+            if (red  != null) SpawnMissile(red,  teamId: 1, pathRaw: redPathRaw);
         }
 
-        public void FireFromAircraft(AircraftUnit shooter, int teamId, string pathRaw = null)
+        public MissileTransaction SpawnMissile(AircraftUnit shooter, int teamId, string pathRaw = null)
         {
             if (missilePrefab == null)
             {
                 Debug.LogError("[MissileManager] missilePrefab not assigned.");
-                return;
+                return null;
             }
             if (trailManager == null)
             {
                 Debug.LogError("[MissileManager] trailManager not found.");
-                return;
+                return null;
             }
             if (shooter == null || shooter.ExhaustL == null || shooter.ExhaustR == null)
             {
                 Debug.LogError("[MissileManager] shooter or its ExhaustL/ExhaustR is null.");
-                return;
+                return null;
             }
             if (string.IsNullOrWhiteSpace(pathRaw))
-                return;
-
-            // --- 1) Spawn missile object ---
-            Transform parent = missilesRoot != null ? missilesRoot : transform;
-            var missile = Instantiate(missilePrefab, parent);
-            _activeMissiles.Add(missile);
+                return null;
 
             // aplica profile (se tiver), senão fica só branco mesmo
             MissileProfile profile = defaultProfile;
             int missileDamage = (profile != null) ? profile.missileDamage : 3;
 
             Color teamColor = (teamId == 0) ? GameEnum.GameColors.TeamBlue : GameEnum.GameColors.TeamRed;
+
+            // --- 1) Spawn missile object ---
+            Transform parent = missilesRoot != null ? missilesRoot : transform;
+            var missile = Instantiate(missilePrefab, parent); // `missile` is MissileUnit
+            _activeMissiles.Add(missile);
 
             if (profile != null)
             {
@@ -148,11 +160,11 @@ namespace Zone5
             // 1 FU do tabuleiro = comprimento do CACA
             float fuWorld = GetFUWorldFromAircraft(shooter);
 
-            // resolve path no catalogo (M10F, L1, S2, etc)
-            var pathDef = MissilePathCatalog.Resolve(pathRaw);
-
             // rangeFU vem do profile (ou default)
             float rangeFU = (defaultProfile != null) ? defaultProfile.rangeFU : defaultRangeFU;
+
+            // resolve path no catalogo (M10F, L1, S2, etc)
+            var pathDef = MissilePathCatalog.Resolve(pathRaw);
 
             // converte pointsNorm -> world
             var controlPts = BuildWorldPoints(start, forward, left, fuWorld, rangeFU, pathDef);
@@ -160,63 +172,155 @@ namespace Zone5
             // suaviza com Catmull-Rom
             var smoothPts = SmoothCatmullRom(controlPts, samplesPerSegment: 10);
 
-            // desenha segmentos curtinhos (curva continua)
-            for (int i = 0; i < smoothPts.Length - 1; i++)
+            // --- 3) Visualização
+            GameObject missileObj = null;
+            if (missilePrefab != null)
             {
-                DrawMissileSegment(missile, smoothPts[i], smoothPts[i + 1], missileColor);
+                // missile was already instantiated above as `var missile = Instantiate(missilePrefab, parent);`
+                // so we just use that `missile` variable.
+                missileObj = missile.gameObject;
+                
+                // Track for cleanup - we need to decide if we track GameObject or Component
+                // _activeMissiles is List<MissileUnit> based on previous context lines?
+                // Let's check definition of _activeMissiles. usually List<MissileUnit>.
+                // If so, we add mUnit.
+                // _activeMissiles.Add(missile); // Already added above
+
+                if (smoothPts.Length > 1)
+                {
+                    Vector3 dir = (smoothPts[1] - smoothPts[0]).normalized;
+                    float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+                    missile.transform.rotation = Quaternion.Euler(0, 0, angle - 90f);
+                }
+
+                // Add or Get View component dynamically if not present on prefab
+                var view = missile.GetComponent<MissileView>();
+                if (view == null) view = missile.gameObject.AddComponent<MissileView>();
+                
+                if (view != null)
+                {
+                    view.SetPath(smoothPts);
+                    
+                    // Configure Progressive Trails
+                    // We need to fetch material from TrailManager if possible
+                    Material mat = (trailManager != null) ? trailManager.lineMaterial : null;
+                    Transform tRoot = (trailManager != null && trailManager.trailsRoot != null) ? trailManager.trailsRoot : transform;
+                    
+                    // If material is null, try finding it as we did in DrawMissileSegment
+                    if (mat == null)
+                    {
+                         var shader = Shader.Find("Sprites/Default");
+                         if (shader != null) mat = new Material(shader);
+                    }
+
+                    view.ConfigureTrail(mat, missileTrailWidth, missileColor, tRoot, missile);
+                    view.AnimatePath(2.0f);
+                }
             }
 
-            // --- 4) Colisão ao longo do caminho (MVP) ---
-            var target = FindTeamUnit(teamId == 0 ? 1 : 0);
-            bool hit = false;
-            if (target != null)
+            // (Removido loop desenha segmentos imediatamente)
+            // A visualização agora é progressiva via MissileView
+
+            return new MissileTransaction
             {
+                Shooter = shooter,
+                TeamId = teamId,
+                PathRaw = pathRaw,
+                SmoothPts = smoothPts,
+                MissileObject = missileObj,
+                FuWorld = fuWorld,
+                Damage = missileDamage
+            };
+        }
+
+        public class MissileHit
+        {
+            public MissileTransaction Transaction;
+            public AircraftUnit Target;
+        }
+
+        public MissileHit CheckCollision(MissileTransaction t)
+        {
+            if (t == null) return null;
+
+            // --- 4) Colisão ao longo do caminho ---
+            // Check all enemy units for collision, sorted by distance
+            var enemyUnits = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None)
+                                .Where(u => u != null && u.teamId != t.TeamId)
+                                .OrderBy(u => Vector3.Distance(t.Shooter.transform.position, u.transform.position))
+                                .ToList();
+
+            foreach (var target in enemyUnits)
+            {
+                if (target == null) continue;
+
                 float debugSeconds = debugLineSeconds;
                 var dbg = FindFirstObjectByType<DebugManager>();
                 if (dbg == null && !debugCollision)
                     debugSeconds = 0f;
 
-                hit = CheckMissilePathHitAircraft(
-                    smoothPts, target,
+                bool hit = CheckMissilePathHitAircraft(
+                    t.SmoothPts, target,
                     aircraftHitRadiusFU, missileRadiusFU,
-                    fuWorld,
+                    t.FuWorld,
                     debugSeconds,
                     missileApproachDotThreshold,
                     missileArmingDistanceFU);
+
                 if (hit)
                 {
-                    Debug.Log($"[Missile] HIT along path! shooterTeam={teamId} target={target.unitId} path={pathRaw}");
-                    ApplyEvasionRoll(target, missileDamage, shooter.name);
-
-                    // MVP: por enquanto só log. Amanhã: rodar dodge + aplicar missileDamage se falhar.
-                    // Você pode também mudar a cor do trail ou piscar o alvo aqui.
+                    return new MissileHit { Transaction = t, Target = target };
                 }
-
             }
 
-            // (MVP) coloca o missil no final
-            start = missile.transform.position;
-            Vector3 end = smoothPts[smoothPts.Length - 1];
-            Vector3 finalPos = start + (end - start); // (mesmo que end, mas deixa explicito)
-            missile.transform.position = finalPos;
+            // (Universal) coloca o missil no final visualmente
+            if (t.MissileObject != null)
+            {
+                Vector3 end = t.SmoothPts[t.SmoothPts.Length - 1];
+                t.MissileObject.transform.position = end;
+            }
 
             // check extra: posicao final do missil tambem pode colidir
-            if (target != null && !hit)
+            if (t.MissileObject != null)
             {
-                hit = CheckMissileFinalHitAircraft(
-                    missile.transform.position,
-                    target,
-                    aircraftHitRadiusFU,
-                    missileRadiusFU,
-                    fuWorld);
-                if (hit)
+                foreach (var target in enemyUnits)
                 {
-                    Debug.Log($"[Missile] HIT at final position! shooter={shooter.name} target={target.name}");
-                    ApplyEvasionRoll(target, missileDamage, shooter.name);
+                    if (target == null) continue;
+
+                    bool hit = CheckMissileFinalHitAircraft(
+                        t.MissileObject.transform.position,
+                        target,
+                        aircraftHitRadiusFU,
+                        missileRadiusFU,
+                        t.FuWorld);
+                    if (hit)
+                    {
+                         return new MissileHit { Transaction = t, Target = target };
+                    }
                 }
             }
 
+            return null; // No hit
         }
+
+        public void ResolveHit(MissileHit hit)
+        {
+            if (hit == null || hit.Target == null || hit.Transaction == null) return;
+
+            var shooterUnit = hit.Transaction.Shooter;
+            string shooterName = GetPrettyName(shooterUnit);
+            string targetName = GetPrettyName(hit.Target);
+            string pathRaw = hit.Transaction.PathRaw;
+
+            // Log de "Hit Confirmation" antes do evasion
+            Debug.Log($"[Missile] COLLISION CONFIRMED: {shooterName} -> {targetName} (Path: {pathRaw})");
+
+            ApplyEvasionRoll(hit.Target, hit.Transaction.Damage, shooterUnit);
+        }
+
+        // The original FireFromAircraft method is removed as per the instruction's intent to replace it.
+        // public void FireFromAircraft(AircraftUnit shooter, int teamId, string pathRaw = null) { ... }
+
         public void ClearMissiles()
         {
             for (int i = _activeMissiles.Count - 1; i >= 0; i--)
@@ -473,7 +577,7 @@ namespace Zone5
                     if (debugSeconds > 0f)
                     {
                         float distFU = traveled / Mathf.Max(0.01f, fallbackFuWorld);
-                        Debug.Log($"[Missile] skip segment: arming (distFU={distFU:0.00})");
+                       // Debug.Log($"[Missile] skip segment: arming (distFU={distFU:0.00})");
                     }
                     continue;
                 }
@@ -492,7 +596,7 @@ namespace Zone5
                 if (dot <= approachDotThreshold)
                 {
                     if (debugSeconds > 0f)
-                        Debug.Log($"[Missile] skip segment: not approaching (dot={dot:0.00})");
+                       // Debug.Log($"[Missile] skip segment: not approaching (dot={dot:0.00})");
                     continue;
                 }
 
@@ -549,49 +653,93 @@ namespace Zone5
 
         // ...
 
-        private void ApplyEvasionRoll(AircraftUnit target, int missileDamage, string shooterName)
+        private void ApplyEvasionRoll(AircraftUnit target, int missileDamage, AircraftUnit shooter)
         {
             if (target == null) return;
 
             // Ensure we have TurnManager
             if (turnManager == null) turnManager = FindFirstObjectByType<TurnManager>();
 
-            if (MvpRules.IsMvp)
+            string shooterName = GetPrettyName(shooter);
+            string shooterUnitId = shooter != null ? shooter.unitId : null;
+
+            // Always use Catalog Logic (Universal) as requested
+            ManeuverDef m = ManeuverCatalog.Resolve(target.LastManeuver);
+            
+            int dice = Mathf.Max(0, m.evasionPenalty);
+
+            string targetName = GetPrettyName(target);
+            string maneuverId = m != null ? m.id : "Unknown";
+
+            Debug.Log($"[Missile] EVASION START: {targetName} hit by {shooterName}. Maneuver={maneuverId} (Dice={dice})");
+
+            if (dice <= 0)
             {
-                int roll = UnityEngine.Random.Range(1, 5); // d4
-                string targetName = !string.IsNullOrEmpty(target.unitId) ? target.unitId : target.name;
-                // MVP Evasion Logic: Roll 1-2 = HIT, 3-4 = MISS
-                if (roll <= 2)
-                {
-                    target.currentHp = 0;
-                    Debug.Log($"[Missile][MVP] Evade roll {roll} => HIT. Target down: {targetName} by {shooterName}");
-                    target.Die();
-                    
-                    if (turnManager != null) 
-                        turnManager.SetAlive(target.playerId, false);
-                }
-                else
-                {
-                    Debug.Log($"[Missile][MVP] Evade roll {roll} => EVADE. Target safe: {targetName}");
-                }
-                return;
+                 Debug.Log($"[Missile] No evasion dice. Automatic FAILURE.");
+                 int tempPoints = 1;
+                 if (!string.IsNullOrEmpty(shooterUnitId))
+                     target.RegisterDamage(shooterUnitId, tempPoints);
+                 Debug.Log($"[TEMP SCORE] {shooterName} gains {tempPoints} temporary points for hitting target {targetName}.");
+                 ApplyDamage(target, missileDamage, shooterUnitId, shooterName);
+                 return;
             }
 
-            // ... (Legacy logic can remain, but ideally should also sync death if HP=0)
-            ManeuverDef m = ManeuverCatalog.Resolve(target.LastManeuver);
-            // ...
+            int fails = 0;
+            int successes = 0;
+            var rollsVals = new System.Collections.Generic.List<int>();
+
+            for (int i = 0; i < dice; i++)
+            {
+                int roll = UnityEngine.Random.Range(1, 5); // d4
+                rollsVals.Add(roll);
+                // 3,4 => Success
+                if (roll >= 3) successes++;
+                else fails++;
+            }
+
+            Debug.Log($"[Missile] Rolls: ({string.Join(",", rollsVals)}) -> {successes} Successes, {fails} Fails");
+
+            int finalDamage = fails * missileDamage;
+            
+            if (finalDamage > 0)
+            {
+                if (!string.IsNullOrEmpty(shooterUnitId))
+                    target.RegisterDamage(shooterUnitId, fails);
+                Debug.Log($"[TEMP SCORE] {shooterName} gains {fails} temporary points for hitting target {targetName} ({successes} successes, {fails} fails).");
+                ApplyDamage(target, finalDamage, shooterUnitId, shooterName);
+            }
+            else
+            {
+                Debug.Log($"[Missile] {targetName} EVADED the missile completely!");
+            }
+        }
+
+        private void ApplyDamage(AircraftUnit target, int damage, string shooterUnitId, string shooterName)
+        {
+            string targetName = GetPrettyName(target);
+            int hpBefore = target.currentHp;
             int hpAfter = Mathf.Max(0, hpBefore - damage);
             target.currentHp = hpAfter;
 
+            Debug.Log($"[Missile] DAMAGE APPLIED: {targetName} took {damage} dmg. HP: {hpBefore}->{hpAfter}");
+
             if (hpAfter == 0)
             {
-                string targetName = !string.IsNullOrEmpty(target.unitId) ? target.unitId : target.name;
-                Debug.Log($"[Missile] Aeronave {targetName} abatida por {shooterName}");
-                target.Die();
+                Debug.Log($"[Missile] KILL CONFIRMED: {targetName} shot down by {shooterName}");
+                target.Die(); // Hides visual, keeps object for overkill
                 
                 if (turnManager != null) 
                     turnManager.SetAlive(target.playerId, false);
             }
+        }
+
+        private static string GetPrettyName(AircraftUnit u)
+        {
+            if (u == null) return "null";
+            // e.g. "Maverick (F-14)"
+            string cs = !string.IsNullOrEmpty(u.callSign) ? u.callSign : "Pilot";
+            string plane = (u.UnitData != null) ? u.UnitData.unitName : "Aircraft";
+            return $"{cs} ({plane})";
         }
 
         /// Menor distância entre dois segmentos em 2D: AB (avião) e PQ (míssil).

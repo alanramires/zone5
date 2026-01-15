@@ -99,10 +99,33 @@ namespace Zone5
             trailSegments.Clear();
         }
 
+        public Dictionary<string, int> roundDamageReceived = new Dictionary<string, int>();
+        public bool isDestroyed = false;
+
+        public void RegisterDamage(string shooter, int dmg)
+        {
+            if (!roundDamageReceived.ContainsKey(shooter))
+                roundDamageReceived[shooter] = 0;
+            roundDamageReceived[shooter] += dmg;
+        }
+
         public void Die()
         {
-            ClearTrails();
-            Destroy(gameObject);
+            // Do NOT destroy immediately. Just mark as dead/destroyed so logic can continue (overkill).
+            isDestroyed = true;
+            
+            // Visual feedback: 
+            // User requested to keep the token visible for screenshots (wreckage).
+            // if (spriteRenderer != null) spriteRenderer.enabled = false; 
+            
+            // Keep trails? Or clear? 
+            // ClearTrails(); // Maybe keep trails for the replay/validation? Let's leave them.
+        }
+
+        public void Cleanup()
+        {
+             ClearTrails();
+             if (gameObject != null) Destroy(gameObject);
         }
 
         public Transform ExhaustAnchor => exhaustAnchor != null ? exhaustAnchor : transform;

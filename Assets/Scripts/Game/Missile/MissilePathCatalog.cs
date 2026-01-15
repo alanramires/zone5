@@ -143,7 +143,8 @@ namespace Zone5
                 },
                 endHeadingSameAsStart=true,
                 aliases=new[]{ "M10S2","10S2","S2","ZIG2","ZIGZAG2","S-FORTE","ZIG-FORTE","7" }
-            };
+            }
+        };
 
         private static Dictionary<string, MissilePathDef> _byAlias;
         private static Dictionary<string, MissilePathDef> ByAlias => _byAlias ??= BuildIndex();

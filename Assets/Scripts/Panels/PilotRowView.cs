@@ -20,4 +20,9 @@ public class PilotRowView : MonoBehaviour
         string content = $"{indexStr}: {callsign} ({aircraft}) HP: {hp} [{status}]";
         SetText(content);
     }
+
+    public void SetColor(Color color)
+    {
+        if (txt != null) txt.color = color;
+    }
 }

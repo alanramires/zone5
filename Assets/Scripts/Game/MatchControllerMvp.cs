@@ -20,6 +20,7 @@ namespace Zone5
 
         private readonly Dictionary<AircraftUnit, Vector3> lastEndByUnit = new();
         private readonly Dictionary<AircraftUnit, List<Segment>> turnSegmentsByUnit = new();
+        private bool didResolveAttacksThisTurn = false;
 
         private void Awake()
         {
@@ -72,18 +73,6 @@ namespace Zone5
             turnManager.TryAdvance();
         }
 
-        public void SubmitTarget(int playerId, int targetId)
-        {
-            if (turnManager == null) return;
-            var row = turnManager.GetOrCreatePlayerRow(playerId);
-            if (row == null) return;
-
-            row.targetId = targetId;
-            row.missileReady = true;
-            turnManager.NotifySheetChanged();
-            turnManager.TryAdvance();
-        }
-
         public void SubmitMissileProfile(int playerId, string profileCode)
         {
             if (turnManager == null) return;
@@ -112,6 +101,7 @@ namespace Zone5
                 case GameEnum.TurnState.SelectManeuver:
                     // New Turn: Clean up old missiles
                     if (missileManager != null) missileManager.ClearMissiles();
+                    didResolveAttacksThisTurn = false;
                     break;
 
                 case GameEnum.TurnState.WaitManeuverConfirm:
@@ -141,14 +131,15 @@ namespace Zone5
                     break;
 
                 case GameEnum.TurnState.SpawnMissilesAndResolveEvasion:
-                     // Step 8, 9, 10
-                    SpawnMissilesAndResolveEvasion();
-                    turnManager.AdvanceButton();
+                    // Step 8, 9, 10
+                    StartCoroutine(SpawnMissilesAndResolveEvasionRoutine());
+                    // Note: Routine calls AdvanceButton
                     break;
 
                 case GameEnum.TurnState.ApplyDamageAndCheckVictory:
                     // Step 11
-                    CheckVictory();
+                    if (!didResolveAttacksThisTurn)
+                        CheckVictory();
                     turnManager.AdvanceButton();
                     break;
             }
@@ -193,27 +184,34 @@ namespace Zone5
             }
         }
 
-        private bool ResolveCollisions()
-        {
-            // User requested Token collision (Bounds), determining purely by final overlap.
-            // "Path" collision (trails) is considered ridiculous.
-             return CheckBoundsCollisions();
-        }
-
         private System.Collections.IEnumerator ResolveCollisionsRoutine()
         {
-            // Execute checks immediately so effects (Die) happen
-            bool collisionFound = ResolveCollisions();
+            var victims = new HashSet<AircraftUnit>();
 
-            if (collisionFound)
+            // 1. Detect Collisions (ONLY detection, no killing yet)
+            // FORCE Token Collision (Bounds) as per user request
+            CollectBoundsCollisions(victims);
+
+            // 2. If collision, Log & Wait
+            if (victims.Count > 0)
             {
-                float delay = (turnManager != null) ? turnManager.endRoundDelaySeconds : 2.0f;
-                Debug.Log($"[MatchControllerMvp] Collision detected! Pausing {delay}s.");
+                float delay = (turnManager != null) ? turnManager.endRoundDelaySeconds : 5.0f; 
+                Debug.Log($"[MatchControllerMvp] Collision detected ({victims.Count} units). Waiting {delay}s before resolving...");
+                
+                // Show visuals? They are already overlapping.
                 yield return new WaitForSeconds(delay);
+
+                // 3. Resolve (Die)
+                foreach (var u in victims)
+                {
+                    if (u == null) continue;
+                    u.currentHp = 0;
+                    u.Die();
+                    if (turnManager != null) turnManager.SetAlive(u.playerId, false);
+                }
             }
             else
             {
-                // Optional: small delay or just next frame if no collision
                 yield return null; 
             }
 
@@ -221,11 +219,104 @@ namespace Zone5
             if (turnManager != null) turnManager.AdvanceButton();
         }
 
-        private void SpawnMissilesAndResolveEvasion()
+        private void CollectPathCollisions(HashSet<AircraftUnit> victims)
         {
-            if (missileManager == null || turnManager == null || turnManager.sheet == null) return;
+            var aircrafts = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None);
+            for (int i = 0; i < aircrafts.Length; i++)
+            {
+                var a = aircrafts[i];
+                if (a == null || a.currentHp <= 0) continue;
+                for (int j = i + 1; j < aircrafts.Length; j++)
+                {
+                    var b = aircrafts[j];
+                    if (b == null || b.currentHp <= 0) continue;
+                    if (HasPathCollision(a, b))
+                    {
+                        Debug.Log($"[MatchControllerMvp] Path collision detected: {a.unitId} vs {b.unitId}");
+                        victims.Add(a);
+                        victims.Add(b);
+                    }
+                }
+            }
+        }
+
+        private void CollectBoundsCollisions(HashSet<AircraftUnit> victims)
+        {
+            var aircrafts = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None);
+            for (int i = 0; i < aircrafts.Length; i++)
+            {
+                var a = aircrafts[i];
+                if (a == null || a.currentHp <= 0) continue;
+                for (int j = i + 1; j < aircrafts.Length; j++)
+                {
+                    var b = aircrafts[j];
+                    if (b == null || b.currentHp <= 0) continue;
+                    if (BoundsIntersect(a, b))
+                    {
+                        Debug.Log($"[MatchControllerMvp] Bounds collision detected: {a.unitId} vs {b.unitId}");
+                        victims.Add(a);
+                        victims.Add(b);
+                    }
+                }
+            }
+        }
+
+        private bool HasPathCollision(AircraftUnit a, AircraftUnit b)
+        {
+            if (!turnSegmentsByUnit.TryGetValue(a, out var segA) || segA.Count == 0) return false;
+            if (!turnSegmentsByUnit.TryGetValue(b, out var segB) || segB.Count == 0) return false;
+
+            float radiusA = aircraftHitRadiusFU * MovementCore.GetFUWorld(a);
+            float radiusB = aircraftHitRadiusFU * MovementCore.GetFUWorld(b);
+            float combined = radiusA + radiusB;
+
+            for (int i = 0; i < segA.Count; i++)
+            {
+                for (int j = 0; j < segB.Count; j++)
+                {
+                    float d = CollisionSystem.MinDistanceSegmentToSegment2D(segA[i].a, segA[i].b, segB[j].a, segB[j].b);
+                    if (d <= combined) return true;
+                }
+            }
+            return false;
+        }
+
+        private static bool BoundsIntersect(AircraftUnit a, AircraftUnit b)
+        {
+            var srA = a.GetComponentInChildren<SpriteRenderer>();
+            var srB = b.GetComponentInChildren<SpriteRenderer>();
+            if (srA == null || srB == null) return false;
+            return srA.bounds.Intersects(srB.bounds);
+        }
+
+        private static AircraftUnit FindUnitByPlayerId(int playerId)
+        {
+            if (playerId <= 0) return null;
+            var units = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None);
+            for (int i = 0; i < units.Length; i++)
+            {
+                var u = units[i];
+                if (u != null && u.playerId == playerId) return u;
+            }
+            return null;
+        }
+
+        private static Color GetTeamColor(int teamId)
+        {
+            return GameEnum.GameColors.GetColorForTeam(teamId);
+        }
+
+        // ... Restored Methods ...
+        // ... Restored Methods ...
+        private System.Collections.IEnumerator SpawnMissilesAndResolveEvasionRoutine()
+        {
+            if (missileManager == null || turnManager == null || turnManager.sheet == null) yield break;
             var rows = turnManager.sheet.rows;
-            if (rows == null) return;
+            if (rows == null) yield break;
+            didResolveAttacksThisTurn = true;
+
+            // 1. Identify all valid shooters FIRST (Simultaneous Logic)
+            var shooters = new System.Collections.Generic.List<(AircraftUnit unit, int teamId, string pathId)>();
 
             for (int i = 0; i < rows.Count; i++)
             {
@@ -236,37 +327,253 @@ namespace Zone5
                 var unit = FindUnitByPlayerId(row.playerId);
                 if (unit == null || unit.currentHp <= 0) continue;
 
-                // Resolve user input (e.g. "M1", "L1") to actual ID (e.g. "M10F", "M10L1")
                 MissilePathDef def = MissilePathCatalog.Resolve(row.missilePath);
                 string pathId = (def != null) ? def.id : MissilePathCatalog.DefaultId;
-
-                missileManager.FireFromAircraft(unit, unit.teamId, pathId);
+                
+                shooters.Add((unit, unit.teamId, pathId));
             }
+            
+            // --- FASE DE SELECIONAR MISSIL (Já ocorreu na UI) ---
+            
+            // --- FASE FIRING (Apenas Sistema) ---
+            // 1. Plota todos os misseis na tela
+            var transactions = new System.Collections.Generic.List<MissileTransaction>();
+            foreach (var s in shooters)
+            {
+                if (s.unit != null)
+                {
+                    var t = missileManager.SpawnMissile(s.unit, s.teamId, s.pathId);
+                    if (t != null) transactions.Add(t);
+                }
+            }
+
+            // --- HIT CHECK (Quais misseis atingiram quais alvos?) ---
+            var pendingHits = new System.Collections.Generic.List<Zone5.MissileManager.MissileHit>();
+            foreach (var t in transactions)
+            {
+                var hit = missileManager.CheckCollision(t);
+                if (hit != null)
+                {
+                    pendingHits.Add(hit);
+                    // Log inicial: registro de hit
+                    Debug.Log($"[Hit Check] {GetPrettyName(hit.Transaction.Shooter)} HAS HIT {GetPrettyName(hit.Target)} with {hit.Transaction.PathRaw}");
+                }
+            }
+
+            // --- DODGE CHECK (Rolling Dice) ---
+            // Resolve pendencias uma a uma
+            foreach (var hit in pendingHits)
+            {
+                missileManager.ResolveHit(hit); // Calcula Evasion e aplica Dano (HP reduz, mas obj nao somes)
+            }
+
+            // --- FASE EVALUATING (Pontos Computados) ---
+            // Misseis sao retirados (visualmente depois?), pontos computados
+            // "Misseis sao retirados": User disse isso aqui, mas disse que espera 10s depois.
+            // Vou computar pontos AGORA, mas limpar DEPOIS dos 10s.
+            CalculateDiesAndScores(); 
+
+            // --- RESOLUÇÃO DO TURNO (Aguarda 10s) ---
+            if (transactions.Count > 0)
+            {
+                 Debug.Log("[MatchControllerMvp] Waiting 10s for visual inspection...");
+                 yield return new WaitForSeconds(10f);
+                 
+                 // --- CLEANUP (Remove Misseis e Aviões Abatidos) ---
+                 missileManager.ClearMissiles();
+                 CleanupBattlefield();
+            }
+            else
+            {
+                 yield return null;
+            }
+
+            // --- VICTORY CHECK ---
+            CheckVictoryCondition();
+
+            turnManager.AdvanceButton();
         }
 
-        private void CheckVictory()
+        private string GetPrettyName(AircraftUnit u)
         {
+             if (u == null) return "null";
+             string cs = !string.IsNullOrEmpty(u.callSign) ? u.callSign : "Pilot";
+             string plane = (u.UnitData != null) ? u.UnitData.unitName : "Aircraft";
+             return $"{cs} ({plane})"; // Helper duplicating MissileManager one, useful for debug here
+        }
+
+        private string GetPrettyNameByUnitId(string unitId)
+        {
+            if (string.IsNullOrEmpty(unitId)) return "Unknown";
             var units = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None);
-            var aliveByTeam = new Dictionary<int, int>();
             for (int i = 0; i < units.Length; i++)
             {
                 var u = units[i];
+                if (u != null && u.unitId == unitId)
+                    return GetPrettyName(u);
+            }
+            return unitId;
+        }
+        private void CalculateDiesAndScores()
+        {
+            var units = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None);
+            
+            foreach (var u in units)
+            {
                 if (u == null) continue;
-                bool alive = u.currentHp > 0;
-                if (turnManager != null)
-                    turnManager.SetAlive(u.playerId, alive);
+                // Determine death (HP 0 or already destroyed flag)
+                bool isDead = u.currentHp <= 0 || u.isDestroyed;
+                
+                if (!isDead) continue; // Alive units don't award points yet
 
-                if (!alive) continue;
-                if (!aliveByTeam.ContainsKey(u.teamId))
-                    aliveByTeam[u.teamId] = 0;
-                aliveByTeam[u.teamId] += 1;
+                // Calculate Score/Assist if we have damage data
+                if (u.roundDamageReceived != null && u.roundDamageReceived.Count > 0)
+                {
+                    int maxDmg = -1;
+                    foreach (var kvp in u.roundDamageReceived)
+                    {
+                        if (kvp.Value > maxDmg) maxDmg = kvp.Value;
+                    }
+
+                    string targetName = GetPrettyName(u);
+                    var contributors = new List<(string unitId, string name, int points)>();
+
+                    foreach (var kvp in u.roundDamageReceived)
+                    {
+                        if (kvp.Value <= 0) continue;
+                        string shooterUnitId = kvp.Key;
+                        string shooterName = GetPrettyNameByUnitId(shooterUnitId);
+                        contributors.Add((shooterUnitId, shooterName, kvp.Value));
+                    }
+
+                    var winners = contributors.Where(c => c.points == maxDmg).ToList();
+                    var assists = contributors.Where(c => c.points < maxDmg).ToList();
+
+                    foreach (var w in winners)
+                    {
+                        int pId = ParsePlayerId(w.unitId);
+                        var pRow = (turnManager != null) ? turnManager.GetOrCreatePlayerRow(pId) : null;
+                        if (pRow != null) pRow.score++;
+                    }
+
+                    foreach (var a in assists)
+                    {
+                        int pId = ParsePlayerId(a.unitId);
+                        var pRow = (turnManager != null) ? turnManager.GetOrCreatePlayerRow(pId) : null;
+                        if (pRow != null) pRow.assists++;
+                    }
+
+                    if (contributors.Count > 0)
+                    {
+                        var parts = new List<string>();
+                        for (int i = 0; i < contributors.Count; i++)
+                        {
+                            var c = contributors[i];
+                            parts.Add($"{c.name} has {c.points} temporary points");
+                        }
+
+                        string winnersText = winners.Count > 0 ? string.Join(", ", winners.Select(w => w.name)) : "none";
+                        string assistsText = assists.Count > 0 ? string.Join(", ", assists.Select(a => a.name)) : "none";
+                        string tieText = winners.Count > 1 ? " (tie)" : "";
+                        Debug.Log($"[TEMP RESOLUTION] {targetName} death: {string.Join(", ", parts)}. Winners{tieText}: {winnersText} (+1 score each). Assists: {assistsText}.");
+                    }
+                    // Clear damage after processing so we don't score again next turn
+                    u.roundDamageReceived.Clear();
+                }
+                
+                // Mark as dead in UI, but DO NOT DESTROY OBJECT YET
+                if (turnManager != null) turnManager.SetAlive(u.playerId, false);
+            }
+        }
+
+        private void CleanupBattlefield()
+        {
+            var units = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None);
+            foreach (var u in units)
+            {
+                if (u == null) continue;
+                if (u.currentHp <= 0 || u.isDestroyed)
+                {
+                    u.Cleanup(); // Destroys game object
+                }
+            }
+        }
+
+        private void CheckVictoryCondition()
+        {
+            var units = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None);
+            var aliveByTeam = new Dictionary<int, int>();
+
+             // Re-scan alive units after cleanup
+            foreach (var u in units)
+            {
+                if (u == null) continue;
+                // Ignore ghost data
+                if (u.teamId < 0 || u.playerId <= 0) continue;
+
+                 if (u.currentHp > 0 && !u.isDestroyed)
+                 {
+                    if (!aliveByTeam.ContainsKey(u.teamId)) aliveByTeam[u.teamId] = 0;
+                    aliveByTeam[u.teamId]++;
+                 }
+            }
+            
+            // Print Standings
+            if (turnManager != null && turnManager.sheet != null && turnManager.sheet.rows != null)
+            {
+                string msg = "TURN RESULTS:\n";
+                foreach(var r in turnManager.sheet.rows)
+                {
+                     // Filter out dummies from UI/Log if they snuck in
+                     if (r.playerId <= 0) continue; 
+                     
+                     string status = r.isAlive ? "(alive)" : "(dead)";
+                     Debug.Log($"[SCORE] Player {r.playerId} ({r.callSign}): {r.score} score, {r.assists} assist {status}");
+                }
             }
 
-            if (aliveByTeam.Count == 1)
+            // 3. Check Team Victory
+            int teamsAlive = aliveByTeam.Count;
+            // Debug.Log($"[MatchControllerMvp] Teams Alive: {teamsAlive} ({string.Join(",", aliveByTeam.Keys)})");
+            
+            if (teamsAlive == 0)
+            {
+                Debug.Log("DRAW! No planes left!");
+                if (turnManager != null)
+                    turnManager.SetMatchEnded(-1);
+            }
+            else if (teamsAlive == 1)
             {
                 int winnerTeam = aliveByTeam.Keys.First();
-                Debug.Log($"[MatchControllerMvp] Victory: team {winnerTeam}");
+                Debug.Log($"VICTORY! Team {winnerTeam} won the match!");
+                if (turnManager != null)
+                    turnManager.SetMatchEnded(winnerTeam);
             }
+            else
+            {
+                 Debug.Log($"Match continues... {teamsAlive} teams fighting.");
+            }
+        }
+
+        // Wrapper for compatibility if needed
+        private void CheckVictory()
+        {
+            CalculateDiesAndScores();
+            CleanupBattlefield();
+            CheckVictoryCondition();
+        }
+
+        private int ParsePlayerId(string unitId)
+        {
+            if (string.IsNullOrEmpty(unitId)) return -1;
+            // Format: "F-14_P1_T0"
+            var parts = unitId.Split('_');
+            foreach (var p in parts)
+            {
+                if (p.StartsWith("P") && int.TryParse(p.Substring(1), out int id))
+                    return id;
+            }
+            return -1;
         }
 
         private void CacheLastEnds()
@@ -394,115 +701,6 @@ namespace Zone5
 
                 lastEndByUnit[unit] = (unit.ExhaustAnchor != null) ? unit.ExhaustAnchor.position : p2;
             }
-        }
-
-        private bool CheckPathCollisions()
-        {
-            var aircrafts = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None);
-            bool anyCollision = false;
-            for (int i = 0; i < aircrafts.Length; i++)
-            {
-                var a = aircrafts[i];
-                if (a == null || a.currentHp <= 0) continue;
-                for (int j = i + 1; j < aircrafts.Length; j++)
-                {
-                    var b = aircrafts[j];
-                    if (b == null || b.currentHp <= 0) continue;
-                    if (HasPathCollision(a, b))
-                    {
-                        Debug.Log($"[MatchControllerMvp] Path collision: {a.unitId} vs {b.unitId}");
-                        a.currentHp = 0;
-                        b.currentHp = 0;
-                        a.Die();
-                        b.Die();
-                        anyCollision = true;
-
-                        if (turnManager != null)
-                        {
-                            turnManager.SetAlive(a.playerId, false);
-                            turnManager.SetAlive(b.playerId, false);
-                        }
-                    }
-                }
-            }
-            return anyCollision;
-        }
-
-        private bool CheckBoundsCollisions()
-        {
-            var aircrafts = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None);
-            bool anyCollision = false;
-            for (int i = 0; i < aircrafts.Length; i++)
-            {
-                var a = aircrafts[i];
-                if (a == null || a.currentHp <= 0) continue;
-                for (int j = i + 1; j < aircrafts.Length; j++)
-                {
-                    var b = aircrafts[j];
-                    if (b == null || b.currentHp <= 0) continue;
-                    if (BoundsIntersect(a, b))
-                    {
-                        Debug.Log($"[MatchControllerMvp] Bounds collision: {a.unitId} vs {b.unitId}");
-                        a.currentHp = 0;
-                        b.currentHp = 0;
-                        a.Die();
-                        b.Die();
-                        anyCollision = true;
-
-                        if (turnManager != null)
-                        {
-                            turnManager.SetAlive(a.playerId, false);
-                            turnManager.SetAlive(b.playerId, false);
-                        }
-                    }
-                }
-            }
-            return anyCollision;
-        }
-
-        private bool HasPathCollision(AircraftUnit a, AircraftUnit b)
-        {
-            if (!turnSegmentsByUnit.TryGetValue(a, out var segA) || segA.Count == 0) return false;
-            if (!turnSegmentsByUnit.TryGetValue(b, out var segB) || segB.Count == 0) return false;
-
-            float radiusA = aircraftHitRadiusFU * MovementCore.GetFUWorld(a);
-            float radiusB = aircraftHitRadiusFU * MovementCore.GetFUWorld(b);
-            float combined = radiusA + radiusB;
-
-            for (int i = 0; i < segA.Count; i++)
-            {
-                for (int j = 0; j < segB.Count; j++)
-                {
-                    float d = CollisionSystem.MinDistanceSegmentToSegment2D(segA[i].a, segA[i].b, segB[j].a, segB[j].b);
-                    if (d <= combined) return true;
-                }
-            }
-            return false;
-        }
-
-        private static bool BoundsIntersect(AircraftUnit a, AircraftUnit b)
-        {
-            var srA = a.GetComponentInChildren<SpriteRenderer>();
-            var srB = b.GetComponentInChildren<SpriteRenderer>();
-            if (srA == null || srB == null) return false;
-            return srA.bounds.Intersects(srB.bounds);
-        }
-
-        private static AircraftUnit FindUnitByPlayerId(int playerId)
-        {
-            if (playerId <= 0) return null;
-            var units = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None);
-            for (int i = 0; i < units.Length; i++)
-            {
-                var u = units[i];
-                if (u != null && u.playerId == playerId) return u;
-            }
-            return null;
-        }
-
-        private static Color GetTeamColor(int teamId)
-        {
-            return GameEnum.GameColors.GetColorForTeam(teamId);
         }
 
         private enum TurnDir { F, D, E }

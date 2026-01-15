@@ -62,6 +62,12 @@ public class Panel_tactical : MonoBehaviour
         {
             t = turnManager.sheet.turnIndex;
             p = GetPhaseLabel(turnManager.sheet.phase);
+            if (turnManager.sheet.phase == GameEnum.TurnState.MatchEnded)
+            {
+                p = turnManager.winnerTeam >= 0
+                    ? $"Team {turnManager.winnerTeam} wins"
+                    : "Draw";
+            }
         }
 
         if (txtTurn != null) txtTurn.text = $"Turno: {t}";
@@ -145,9 +151,10 @@ public class Panel_tactical : MonoBehaviour
         foreach (var pRow in sortedRows)
         {
             if (pRow == null) continue;
+            if (pRow.playerId <= 0) continue;
 
-            // Get unit info
-            string callsign = $"P{pRow.playerId}";
+            // Get unit info - Try Map first (live), then fallback to Persistent
+            string callsign = "Unknown";
             string aircraftName = "Unknown";
             int hp = 0;
             
@@ -156,6 +163,19 @@ public class Panel_tactical : MonoBehaviour
                 callsign = !string.IsNullOrEmpty(unit.callSign) ? unit.callSign : unit.unitId;
                 aircraftName = unit.UnitData != null ? unit.UnitData.unitName : "Fighter";
                 hp = unit.currentHp;
+                
+                // Update persistent data just in case
+                pRow.callSign = callsign;
+                pRow.aircraftName = aircraftName;
+                pRow.cachedHp = hp;
+            }
+            else
+            {
+                // Unit destroyed? Use persistent data
+                callsign = !string.IsNullOrEmpty(pRow.callSign) ? pRow.callSign : $"P{pRow.playerId}";
+                aircraftName = !string.IsNullOrEmpty(pRow.aircraftName) ? pRow.aircraftName : "Fighter";
+                hp = pRow.cachedHp; // Likely 0 or last known
+                if (!pRow.isAlive) hp = 0;
             }
 
             string status = GetPilotStatus(pRow, state);
@@ -166,6 +186,12 @@ public class Panel_tactical : MonoBehaviour
                 var ui = Instantiate(pilotRowPrefab, playersListRoot);
                 // "1: Maverick (F-14) HP: 3 [Pronto]"
                 ui.Setup(pRow.playerId.ToString(), callsign, aircraftName, hp, status);
+                
+                if (!pRow.isAlive)
+                    ui.SetColor(new Color(0.4f, 0.4f, 0.4f)); // Dark Gray
+                else
+                    ui.SetColor(Color.white);
+
                 rows.Add(ui);
             }
         }
@@ -223,6 +249,7 @@ public class Panel_tactical : MonoBehaviour
             GameEnum.TurnState.SpawnMissilesAndResolveEvasion => "Resolução de Ataques",
             GameEnum.TurnState.ApplyDamageAndCheckVictory => "Danos e Vitória",
             GameEnum.TurnState.EndRoundAndAdvance => "Firing...",
+            GameEnum.TurnState.MatchEnded => "Match ended",
             _ => state.ToString(),
         };
     }

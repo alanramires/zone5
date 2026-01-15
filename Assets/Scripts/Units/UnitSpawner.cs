@@ -117,16 +117,13 @@ namespace Zone5
                 // Instantiate a dummy to measure FU correctly in world space
                 // (Prefab transform.position might not reflect world spacing correctly if scaled)
                 var dummy = Instantiate(aircraftPrefab, Vector3.zero, Quaternion.identity);
+                dummy.gameObject.SetActive(false); 
+                dummy.gameObject.hideFlags = HideFlags.HideAndDontSave; // Prevent scene searches finding it easily
                 fuFactor = MovementCore.GetFUWorld(dummy);
                 
-                // Cleanup dummy immediately
-                // Use DestroyImmediate if in Editor and not playing, otherwise Destroy
-                #if UNITY_EDITOR
-                if (!Application.isPlaying) DestroyImmediate(dummy.gameObject);
-                else Destroy(dummy.gameObject);
-                #else
-                Destroy(dummy.gameObject);
-                #endif
+                // Cleanup dummy immediately - ALWAYS to prevent ghost
+                if (Application.isPlaying) Destroy(dummy.gameObject); // Destroy is delayed...
+                DestroyImmediate(dummy.gameObject); // Force kill now
             }
 
             // Restore MVP Defaults if Inspector values are Zero (Auto-Layout)
@@ -263,7 +260,7 @@ namespace Zone5
                 var tm = FindFirstObjectByType<TurnManager>();
                 if (tm != null)
                 {
-                    tm.RegisterUnit(playerId, true);
+                    tm.RegisterUnit(unit);
                 }
 
                 // Orient

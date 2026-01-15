@@ -4,7 +4,7 @@ using Zone5;
 public class DebugManager : MonoBehaviour
 {
     [Header("MASTER")]
-    public bool toggleAllDebugsVisible = true;
+    public bool toggleAllDebugsVisible = false;
 
     [Header("CUSTOM TOGGLES")]
     public bool aircraftHitbox = true;

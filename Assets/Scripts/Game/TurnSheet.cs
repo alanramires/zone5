@@ -17,15 +17,22 @@ namespace Zone5
             public int playerId;
             public bool isAlive = true;
 
+            // Persistent Info (for UI when unit is dead)
+            public string callSign;
+            public string aircraftName;
+            public int cachedHp;  // Last known HP
+
             public string maneuverRaw;
             public bool maneuverReady;
 
             public string weaponCode;
             public bool weaponReady;
 
-            public int targetId = -1;
             public string missilePath;
             public bool missileReady;
+
+            public int score;
+            public int assists;
         }
 
         public bool AllReadyForPhase(GameEnum.TurnState phaseState)
@@ -108,7 +115,7 @@ namespace Zone5
                     {
                         var r = rows[i];
                         if (r == null || !r.isAlive || r.missileReady) continue;
-                        if (r.targetId < 0 && string.IsNullOrWhiteSpace(r.missilePath))
+                        if (string.IsNullOrWhiteSpace(r.missilePath))
                             r.missileReady = true;
                     }
                     break;
@@ -127,7 +134,6 @@ namespace Zone5
                 r.maneuverReady = false;
                 r.weaponCode = null;
                 r.weaponReady = false;
-                r.targetId = -1;
                 r.missilePath = null;
                 r.missileReady = false;
             }

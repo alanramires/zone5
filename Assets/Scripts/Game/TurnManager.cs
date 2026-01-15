@@ -21,7 +21,11 @@ namespace Zone5
         [Header("Debug")]
         public bool logStateChanges = true;
         [Header("Timing")]
-        public float endRoundDelaySeconds = 5.0f;
+        public float endRoundDelaySeconds = 0.0f;
+
+        [Header("Match")]
+        public bool matchEnded = false;
+        public int winnerTeam = -1;
 
         private void Start()
         {
@@ -47,12 +51,13 @@ namespace Zone5
             {
                 var unit = units[i];
                 if (unit == null || unit.playerId <= 0) continue;
-                RegisterUnit(unit.playerId, unit.currentHp > 0);
+                RegisterUnit(unit);
             }
         }
 
         public TurnSheet.PlayerRow GetOrCreatePlayerRow(int playerId)
         {
+            if (playerId <= 0) return null;
             if (sheet == null) return null;
             if (sheet.rows == null)
                 sheet.rows = new List<TurnSheet.PlayerRow>();
@@ -69,11 +74,17 @@ namespace Zone5
             return data;
         }
 
-        public void RegisterUnit(int playerId, bool isAlive = true)
+        public void RegisterUnit(AircraftUnit unit)
         {
-            var row = GetOrCreatePlayerRow(playerId);
+            if (unit == null) return;
+            var row = GetOrCreatePlayerRow(unit.playerId);
             if (row == null) return;
-            row.isAlive = isAlive;
+            
+            row.isAlive = unit.currentHp > 0;
+            row.callSign = !string.IsNullOrEmpty(unit.callSign) ? unit.callSign : unit.unitId;
+            row.aircraftName = unit.UnitData != null ? unit.UnitData.unitName : "Fighter";
+            row.cachedHp = unit.currentHp;
+
             NotifySheetChanged();
         }
 
@@ -92,6 +103,7 @@ namespace Zone5
 
         public void AdvanceButton()
         {
+            if (matchEnded) return;
             if (sheet == null) return;
             sheet.ApplyDefaultsForPhase(sheet.phase);
             NotifySheetChanged();
@@ -100,6 +112,7 @@ namespace Zone5
 
         public void TryAdvance()
         {
+            if (matchEnded) return;
             if (sheet == null) return;
             if (sheet.AllReadyForPhase(sheet.phase))
                 NextState();
@@ -107,6 +120,7 @@ namespace Zone5
 
         private void NextState()
         {
+            if (matchEnded) return;
             if (sheet == null) return;
 
             GameEnum.TurnState nextState;
@@ -170,6 +184,7 @@ namespace Zone5
             {
                 case GameEnum.TurnState.SelectManeuver:
                     sheet.ResetForNewTurn();
+                    ClearTemporaryDamage();
                     NotifySheetChanged();
                     break;
                 case GameEnum.TurnState.RevealAndMoveFighters:
@@ -185,12 +200,48 @@ namespace Zone5
                     Debug.Log("[TurnManager] ApplyDamageAndCheckVictory placeholder.");
                     break;
                 case GameEnum.TurnState.EndRoundAndAdvance:
-                    Debug.Log($"[TurnManager] Ending round. Wait {endRoundDelaySeconds}s...");
-                    StartCoroutine(WaitAndAdvanceRoutine());
+                    if (endRoundDelaySeconds <= 0f)
+                    {
+                        NextState();
+                    }
+                    else
+                    {
+                        Debug.Log($"[TurnManager] Ending round. Wait {endRoundDelaySeconds}s...");
+                        StartCoroutine(WaitAndAdvanceRoutine());
+                    }
+                    break;
+                case GameEnum.TurnState.MatchEnded:
+                    Debug.Log("[TurnManager] Match ended.");
                     break;
             }
 
             OnStateChanged?.Invoke();
+        }
+
+        private void ClearTemporaryDamage()
+        {
+            var units = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None);
+            int cleared = 0;
+            for (int i = 0; i < units.Length; i++)
+            {
+                var u = units[i];
+                if (u == null || u.roundDamageReceived == null) continue;
+                if (u.roundDamageReceived.Count > 0)
+                {
+                    u.roundDamageReceived.Clear();
+                    cleared++;
+                }
+            }
+            Debug.Log($"[TEMP CLEAR] Cleared temporary hit points for {cleared} aircraft.");
+        }
+
+        public void SetMatchEnded(int winnerTeamId)
+        {
+            matchEnded = true;
+            winnerTeam = winnerTeamId;
+            if (sheet != null)
+                sheet.phase = GameEnum.TurnState.MatchEnded;
+            EnterState(GameEnum.TurnState.MatchEnded);
         }
 
         private System.Collections.IEnumerator WaitAndAdvanceRoutine()

@@ -42,6 +42,7 @@ namespace Zone5
 
             // 11) Limpa a rodada e avança para a próxima
             EndRoundAndAdvance = 10,
+            MatchEnded = 11,
         }
 
         // Cores de time (por enquanto 4)
