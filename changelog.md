@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.8 - Colisões e movimentos
+
+- Movimento animado para aeronaves com trilha progressiva (AircraftView) e sincronismo de tempo
+- Colisão de aeronaves baseada em Collider2D real (Distance/isOverlapped), com ajuste por UnitProfile
+- Fim de partida como estado explícito (MatchEnded) e painel tático atualizado
+- Pontuação temporária por falhas de evasão, resolução de empate e limpeza por rodada
+- Debug: friendly fire toggle, trail hitbox laranja restaurado e defaults de debug desligados
+
 ## 0.0.5 - evasao, dano e colisao entre aeronaves
 
 - Rolagem de evasao (d4) por manobra e aplicacao de dano no hit

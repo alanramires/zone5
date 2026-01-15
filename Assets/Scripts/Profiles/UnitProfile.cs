@@ -23,5 +23,11 @@ namespace Zone5
         [Header("Scale (optional)")]
         [Tooltip("Comprimento do token do caça em Fighter Units (FU). Default = 1.")]
         public float tokenLengthFU = 1f;
-    }
+    
+        [Header("Collision (optional)")]
+        [Tooltip("Tamanho do BoxCollider2D em unidades de mundo. (0,0) = nao altera.")]
+        public Vector2 colliderSize = Vector2.zero;
+        [Tooltip("Offset do BoxCollider2D em unidades de mundo.")]
+        public Vector2 colliderOffset = Vector2.zero;
+}
 }

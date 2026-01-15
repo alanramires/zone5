@@ -3185,6 +3185,7 @@ MonoBehaviour:
   missileArmingDistanceFU: 0
   debugCollision: 1
   debugLineSeconds: 2
+  turnManager: {fileID: 0}
 --- !u!1 &1027429491
 GameObject:
   m_ObjectHideFlags: 0
@@ -3234,6 +3235,7 @@ MonoBehaviour:
   missileHitbox: 1
   trailHitboxAlongsidePath: 1
   collisionDetectedCircle: 1
+  friendlyFireEnabled: 0
   trailHitboxMode: 1
   extendedTrailHitboxTolerance: 0
   applyEveryFrame: 1
@@ -3860,6 +3862,9 @@ MonoBehaviour:
     rows: []
   autoRegisterFromScene: 1
   logStateChanges: 1
+  endRoundDelaySeconds: 5
+  matchEnded: 0
+  winnerTeam: -1
 --- !u!1 &1263745201
 GameObject:
   m_ObjectHideFlags: 0
@@ -7636,7 +7641,7 @@ MonoBehaviour:
   - teamName: USA
     teamId: 0
     unitData: {fileID: 11400000, guid: 7803087a427e98648b4016432d4af4d1, type: 2}
-    count: 3
+    count: 2
     basePos: {x: 0, y: 0}
     spawnDirection: {x: 0, y: 0}
     pilotNames: []

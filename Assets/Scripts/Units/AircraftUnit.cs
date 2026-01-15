@@ -65,6 +65,13 @@ namespace Zone5
                 spriteRenderer.color = teamColor;
             }
 
+            var box = GetComponent<BoxCollider2D>();
+            if (box != null && data.colliderSize.x > 0f && data.colliderSize.y > 0f)
+            {
+                box.size = data.colliderSize;
+                box.offset = data.colliderOffset;
+            }
+
             currentHp = MvpRules.IsMvp ? 1 : data.maxHp;
             currentFuel = data.maxFuel;
             currentMissiles = data.missilesMax;

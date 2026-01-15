@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 9179833934225619914}
   - component: {fileID: 8928883681832159251}
-  - component: {fileID: 2551934040765420629}
   m_Layer: 0
   m_Name: HitboxView
   m_TagString: Untagged
@@ -27,8 +26,8 @@ Transform:
   m_GameObject: {fileID: 826305412262671573}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.0025997162, y: 0.0346, z: 0}
-  m_LocalScale: {x: 10.27774, y: 11.608217, z: 1}
+  m_LocalPosition: {x: -0.0209, y: 0.0164, z: 0}
+  m_LocalScale: {x: 13.828155, y: 13.726672, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7957478740002528132}
@@ -91,20 +90,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &2551934040765420629
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 826305412262671573}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 06b3644f62dc4c842b9f889b7be82ef6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Zone5.HitboxOverlay
-  sr: {fileID: 0}
-  visible: 1
 --- !u!1 &943860080061318799
 GameObject:
   m_ObjectHideFlags: 0
@@ -267,6 +252,8 @@ GameObject:
   - component: {fileID: 7483065710324820363}
   - component: {fileID: 5045868225198730896}
   - component: {fileID: 6539671569950803902}
+  - component: {fileID: 4914130234341858050}
+  - component: {fileID: 2198000088835314356}
   m_Layer: 0
   m_Name: Aircraft
   m_TagString: Untagged
@@ -368,15 +355,18 @@ MonoBehaviour:
   teamId: 0
   unitId: 
   callSign: 
+  playerId: 0
   currentHp: 0
   currentFuel: 0
   currentMissiles: 0
+  maneuverHistory: []
   spriteRenderer: {fileID: 7483065710324820363}
   ExhaustL: {fileID: 3537203509710468476}
   ExhaustR: {fileID: 7481861158984034063}
   exhaustAnchor: {fileID: 1813517315049696469}
   noseAnchor: {fileID: 8075273571596226473}
   trailSegments: []
+  isDestroyed: 0
 --- !u!120 &6539671569950803902
 LineRenderer:
   serializedVersion: 2
@@ -487,6 +477,65 @@ LineRenderer:
   m_UseWorldSpace: 1
   m_Loop: 0
   m_ApplyActiveColorSpace: 1
+--- !u!114 &4914130234341858050
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5402373510890763473}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06b3644f62dc4c842b9f889b7be82ef6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HitboxOverlay
+  sr: {fileID: 8928883681832159251}
+--- !u!61 &2198000088835314356
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5402373510890763473}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 2, y: 2}
+    newSize: {x: 2, y: 2}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 1.8, y: 1.8}
+  m_EdgeRadius: 0
 --- !u!1 &6765471477177371809
 GameObject:
   m_ObjectHideFlags: 0

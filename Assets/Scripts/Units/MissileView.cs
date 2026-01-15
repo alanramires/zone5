@@ -124,6 +124,37 @@ namespace Zone5
             
             // Register for cleanup
             if (_unitSync != null) _unitSync.AddTrail(lr);
+
+            var dbg = FindFirstObjectByType<DebugManager>();
+            if (dbg != null)
+            {
+                var dbgGo = new GameObject($"MissileTrailDbg_{id}_{idxA}");
+                if (_trailRoot != null) dbgGo.transform.SetParent(_trailRoot, false);
+                else dbgGo.transform.SetParent(transform.parent, false);
+
+                var dbgLr = dbgGo.AddComponent<LineRenderer>();
+                dbgLr.useWorldSpace = true;
+                dbgLr.positionCount = 2;
+                dbgLr.startWidth = _width;
+                dbgLr.endWidth = _width;
+                dbgLr.widthMultiplier = dbg.GetTrailHitboxWidthMultiplier();
+                dbgLr.sortingLayerName = "FX";
+                dbgLr.sortingOrder = 999;
+
+                if (_trailMat != null)
+                    dbgLr.material = new Material(_trailMat);
+
+                Color dbgColor = new Color(1f, 0.5f, 0f, 0.5f);
+                dbgLr.startColor = dbgColor;
+                dbgLr.endColor = dbgColor;
+                if (dbgLr.material != null) dbgLr.material.color = dbgColor;
+
+                dbgLr.SetPosition(0, A);
+                dbgLr.SetPosition(1, B);
+                dbgLr.enabled = dbg.toggleAllDebugsVisible && dbg.trailHitboxAlongsidePath;
+
+                if (_unitSync != null) _unitSync.AddDebugTrail(dbgLr);
+            }
         }
 
         private Vector3 SamplePath(float t, out int currentIndex)

@@ -7,10 +7,11 @@ public class DebugManager : MonoBehaviour
     public bool toggleAllDebugsVisible = false;
 
     [Header("CUSTOM TOGGLES")]
-    public bool aircraftHitbox = true;
-    public bool missileHitbox = true;
-    public bool trailHitboxAlongsidePath = true;
-    public bool collisionDetectedCircle = true;
+    public bool aircraftHitbox = false;
+    public bool missileHitbox = false;
+    public bool trailHitboxAlongsidePath = false;
+    public bool collisionDetectedCircle = false;
+    public bool friendlyFireEnabled = false;
 
     public enum TrailHitboxMode
     {
@@ -20,7 +21,7 @@ public class DebugManager : MonoBehaviour
     }
 
     [Header("Trail Hitbox Mode")]
-    public TrailHitboxMode trailHitboxMode = TrailHitboxMode.Expert;
+    public TrailHitboxMode trailHitboxMode = TrailHitboxMode.Basic;
 
     [Header("FUTURE")]
     public bool extendedTrailHitboxTolerance = false;
@@ -34,6 +35,7 @@ public class DebugManager : MonoBehaviour
 
     void Start()
     {
+        toggleAllDebugsVisible = false;
         Apply(true);
         CacheState();
     }

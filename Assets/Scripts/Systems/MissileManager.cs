@@ -245,8 +245,11 @@ namespace Zone5
 
             // --- 4) Colisão ao longo do caminho ---
             // Check all enemy units for collision, sorted by distance
+            var dbgManager = FindFirstObjectByType<DebugManager>();
+            bool allowFriendlyFire = dbgManager != null && dbgManager.friendlyFireEnabled;
+
             var enemyUnits = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None)
-                                .Where(u => u != null && u.teamId != t.TeamId)
+                                .Where(u => u != null && u != t.Shooter && (allowFriendlyFire || u.teamId != t.TeamId))
                                 .OrderBy(u => Vector3.Distance(t.Shooter.transform.position, u.transform.position))
                                 .ToList();
 

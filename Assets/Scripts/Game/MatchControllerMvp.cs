@@ -15,6 +15,10 @@ namespace Zone5
         [Header("Debug")]
         [SerializeField] private bool logFlow = true;
 
+        [Header("Movement")]
+        [SerializeField] private bool animateMovement = true;
+        [SerializeField] private float movementDurationSeconds = 2.0f;
+
         [Header("Collision (MVP)")]
         [Range(0.10f, 1.00f)] public float aircraftHitRadiusFU = 0.10f;
 
@@ -116,9 +120,7 @@ namespace Zone5
 
                 case GameEnum.TurnState.RevealAndMoveFighters:
                     // Step 5: Systema plota os aviões
-                    RevealAndMoveFighters();
-                    // Step 6: Systema espera ele mesmo terminar... fazendo check de colisão aérea
-                    turnManager.AdvanceButton(); // Automatically advance to ResolveCollisions after move
+                    StartCoroutine(RevealAndMoveFightersRoutine());
                     break;
 
                 case GameEnum.TurnState.ResolveCollisions:
@@ -145,14 +147,25 @@ namespace Zone5
             }
         }
 
-        private void RevealAndMoveFighters()
+        private System.Collections.IEnumerator RevealAndMoveFightersRoutine()
         {
-            if (turnManager == null || turnManager.sheet == null) return;
+            int moved = RevealAndMoveFighters();
+            if (animateMovement && moved > 0 && movementDurationSeconds > 0f)
+                yield return new WaitForSeconds(movementDurationSeconds);
+
+            // Step 6: Systema espera ele mesmo terminar... fazendo check de colisao aerea
+            if (turnManager != null) turnManager.AdvanceButton();
+        }
+
+        private int RevealAndMoveFighters()
+        {
+            if (turnManager == null || turnManager.sheet == null) return 0;
 
             ClearTurnSegments();
             var rows = turnManager.sheet.rows;
-            if (rows == null) return;
+            if (rows == null) return 0;
 
+            int moved = 0;
             for (int i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
@@ -180,8 +193,10 @@ namespace Zone5
                 unit.maneuverHistory.Add(log);
 
                 TurnDir dir = ParseDirFromRaw(raw);
-                ExecuteManeuver(unit, def, dir, GetTeamColor(unit.teamId));
+                ExecuteManeuver(unit, def, dir, GetTeamColor(unit.teamId), ref moved);
             }
+
+            return moved;
         }
 
         private System.Collections.IEnumerator ResolveCollisionsRoutine()
@@ -283,6 +298,11 @@ namespace Zone5
 
         private static bool BoundsIntersect(AircraftUnit a, AircraftUnit b)
         {
+            var colA = a.GetComponentInChildren<Collider2D>();
+            var colB = b.GetComponentInChildren<Collider2D>();
+            if (colA != null && colB != null)
+                return colA.Distance(colB).isOverlapped;
+
             var srA = a.GetComponentInChildren<SpriteRenderer>();
             var srB = b.GetComponentInChildren<SpriteRenderer>();
             if (srA == null || srB == null) return false;
@@ -602,7 +622,7 @@ namespace Zone5
             list.Add(new Segment(start, end));
         }
 
-        private void ExecuteManeuver(AircraftUnit unit, ManeuverDef m, TurnDir dir, Color teamColor)
+        private void ExecuteManeuver(AircraftUnit unit, ManeuverDef m, TurnDir dir, Color teamColor, ref int moved)
         {
             if (trailManager == null || unit == null || m == null) return;
 
@@ -618,11 +638,19 @@ namespace Zone5
                 float distFU = Mathf.Max(0f, m.distanceFU);
                 Vector3 end = start + forward * (distFU * fuWorld);
 
-                trailManager.CreateSegment(unit, start, end, strongColor);
                 AddTurnSegment(unit, start, end);
-
-                MovementCore.AlignAndTeleportToEnd(unit, start, end, forward);
                 lastEndByUnit[unit] = end;
+                
+                if (animateMovement)
+                {
+                    StartAircraftAnimation(unit, new List<Vector3> { start, end }, strongColor);
+                    moved++;
+                }
+                else
+                {
+                    trailManager.CreateSegment(unit, start, end, strongColor);
+                    MovementCore.AlignAndTeleportToEnd(unit, start, end, forward);
+                }
                 return;
             }
 
@@ -639,10 +667,19 @@ namespace Zone5
                 if (Mathf.Abs(thetaRad) < 0.0001f)
                 {
                     Vector3 endStraight = p0 + forward0 * totalDist;
-                    trailManager.CreateSegment(unit, p0, endStraight, strongColor);
                     AddTurnSegment(unit, p0, endStraight);
-                    MovementCore.AlignAndTeleportToEnd(unit, p0, endStraight, forward0);
                     lastEndByUnit[unit] = endStraight;
+
+                    if (animateMovement)
+                    {
+                        StartAircraftAnimation(unit, new List<Vector3> { p0, endStraight }, strongColor);
+                        moved++;
+                    }
+                    else
+                    {
+                        trailManager.CreateSegment(unit, p0, endStraight, strongColor);
+                        MovementCore.AlignAndTeleportToEnd(unit, p0, endStraight, forward0);
+                    }
                     return;
                 }
 
@@ -653,54 +690,78 @@ namespace Zone5
                 Vector3 p2 = center + MovementCore.Rotate2D(p0 - center, theta);
 
                 int steps = Mathf.Max(16, Mathf.CeilToInt(Mathf.Abs(theta) / 5f));
+                var path = new List<Vector3> { p0 };
                 Vector3 prev = p0;
                 for (int i = 1; i <= steps; i++)
                 {
                     float t = i / (float)steps;
                     float angDeg = theta * t;
                     Vector3 pt = center + MovementCore.Rotate2D(p0 - center, angDeg);
-                    trailManager.CreateSegment(unit, prev, pt, strongColor);
                     AddTurnSegment(unit, prev, pt);
+                    path.Add(pt);
                     prev = pt;
                 }
 
-                Vector3 endDir = MovementCore.Rotate2D(forward0, theta).normalized;
+                lastEndByUnit[unit] = p2;
 
-                float width = 0.5f * fuWorld;
-                if (unit.ExhaustL != null && unit.ExhaustR != null)
-                    width = Vector3.Distance(unit.ExhaustL.position, unit.ExhaustR.position);
-
-                Vector3 airRight = (unit.ExhaustR.position - unit.ExhaustL.position);
-                airRight.z = 0f;
-                if (airRight.sqrMagnitude < 0.000001f)
-                    airRight = MovementCore.Rotate2D(endDir, -90f);
-                airRight.Normalize();
-
-                Vector3 endRight = MovementCore.Rotate2D(endDir, -90f).normalized;
-                if (Vector3.Dot(endRight, airRight) < 0f) endRight = -endRight;
-
-                Vector3 targetL = p2 - endRight * (width * 0.5f);
-                Vector3 targetR = p2 + endRight * (width * 0.5f);
-
-                MovementCore.MagnetAlignByTwoAnchors(unit, targetL, targetR);
-
-                Vector3 exhaustPinned = (unit.ExhaustAnchor != null) ? unit.ExhaustAnchor.position : unit.transform.position;
-
-                Vector3 fwdNow = MovementCore.GetForward(unit);
-                fwdNow.z = 0f;
-                endDir.z = 0f;
-
-                if (fwdNow.sqrMagnitude > 0.000001f && endDir.sqrMagnitude > 0.000001f)
+                if (animateMovement)
                 {
-                    Quaternion rotToEnd = Quaternion.FromToRotation(fwdNow.normalized, endDir.normalized);
-                    unit.transform.rotation = rotToEnd * unit.transform.rotation;
-
-                    Vector3 exhaustAfter = (unit.ExhaustAnchor != null) ? unit.ExhaustAnchor.position : unit.transform.position;
-                    unit.transform.position += (exhaustPinned - exhaustAfter);
+                    StartAircraftAnimation(unit, path, strongColor);
+                    moved++;
                 }
+                else
+                {
+                    for (int i = 0; i < path.Count - 1; i++)
+                        trailManager.CreateSegment(unit, path[i], path[i + 1], strongColor);
 
-                lastEndByUnit[unit] = (unit.ExhaustAnchor != null) ? unit.ExhaustAnchor.position : p2;
+                    Vector3 endDir = MovementCore.Rotate2D(forward0, theta).normalized;
+
+                    float width = 0.5f * fuWorld;
+                    if (unit.ExhaustL != null && unit.ExhaustR != null)
+                        width = Vector3.Distance(unit.ExhaustL.position, unit.ExhaustR.position);
+
+                    Vector3 airRight = (unit.ExhaustR.position - unit.ExhaustL.position);
+                    airRight.z = 0f;
+                    if (airRight.sqrMagnitude < 0.000001f)
+                        airRight = MovementCore.Rotate2D(endDir, -90f);
+                    airRight.Normalize();
+
+                    Vector3 endRight = MovementCore.Rotate2D(endDir, -90f).normalized;
+                    if (Vector3.Dot(endRight, airRight) < 0f) endRight = -endRight;
+
+                    Vector3 targetL = p2 - endRight * (width * 0.5f);
+                    Vector3 targetR = p2 + endRight * (width * 0.5f);
+
+                    MovementCore.MagnetAlignByTwoAnchors(unit, targetL, targetR);
+
+                    Vector3 exhaustPinned = (unit.ExhaustAnchor != null) ? unit.ExhaustAnchor.position : unit.transform.position;
+
+                    Vector3 fwdNow = MovementCore.GetForward(unit);
+                    fwdNow.z = 0f;
+                    endDir.z = 0f;
+
+                    if (fwdNow.sqrMagnitude > 0.000001f && endDir.sqrMagnitude > 0.000001f)
+                    {
+                        Quaternion rotToEnd = Quaternion.FromToRotation(fwdNow.normalized, endDir.normalized);
+                        unit.transform.rotation = rotToEnd * unit.transform.rotation;
+
+                        Vector3 exhaustAfter = (unit.ExhaustAnchor != null) ? unit.ExhaustAnchor.position : unit.transform.position;
+                        unit.transform.position += (exhaustPinned - exhaustAfter);
+                    }
+                }
             }
+        }
+
+        private void StartAircraftAnimation(AircraftUnit unit, List<Vector3> path, Color color)
+        {
+            if (unit == null || path == null || path.Count < 2) return;
+
+            var view = unit.GetComponent<AircraftView>();
+            if (view == null) view = unit.gameObject.AddComponent<AircraftView>();
+
+            view.ConfigureTrail(trailManager, color, unit);
+            view.SetPath(path.ToArray());
+            view.AnimatePath(movementDurationSeconds);
         }
 
         private enum TurnDir { F, D, E }
