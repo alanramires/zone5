@@ -11,6 +11,7 @@ namespace Zone5
         [SerializeField] private TurnManager turnManager;
         [SerializeField] private TrailManager trailManager;
         [SerializeField] private MissileManager missileManager;
+        [SerializeField] private ManeuverManager maneuverManager;
 
         [Header("Debug")]
         [SerializeField] private bool logFlow = true;
@@ -34,6 +35,8 @@ namespace Zone5
                 trailManager = FindFirstObjectByType<TrailManager>();
             if (missileManager == null)
                 missileManager = FindFirstObjectByType<MissileManager>();
+            if (maneuverManager == null)
+                maneuverManager = FindFirstObjectByType<ManeuverManager>();
         }
 
         private void OnEnable()
@@ -174,13 +177,21 @@ namespace Zone5
 
                 var unit = FindUnitByPlayerId(row.playerId);
                 if (unit == null) continue;
-
                 string raw = MvpRules.SanitizeManeuver(row.maneuverRaw);
-                ManeuverDef def = ManeuverCatalog.Resolve(raw);
-                string validRaw = string.IsNullOrWhiteSpace(raw) ? def.id : raw;
-                
-                int g = 1; 
-                if (validRaw.Length > 0 && char.IsDigit(validRaw[0])) int.TryParse(validRaw[0].ToString(), out g);
+                ManeuverProfile profile = ResolveManeuverProfile(raw);
+                ManeuverDef def = null;
+                if (profile == null)
+                {
+                    WarnProfileFallbackOnce();
+                    def = ManeuverCatalog.Resolve(raw);
+                }
+                string fallbackId = def != null ? def.id : "";
+                string validRaw = string.IsNullOrWhiteSpace(raw)
+                    ? (profile != null ? profile.maneuverId : fallbackId)
+                    : raw;
+
+                int g = profile != null ? Mathf.RoundToInt(profile.gForce) : 1;
+                if (g <= 0 && validRaw.Length > 0 && char.IsDigit(validRaw[0])) int.TryParse(validRaw[0].ToString(), out g);
 
                 var log = new AircraftUnit.FlightLog
                 {
@@ -193,7 +204,10 @@ namespace Zone5
                 unit.maneuverHistory.Add(log);
 
                 TurnDir dir = ParseDirFromRaw(raw);
-                ExecuteManeuver(unit, def, dir, GetTeamColor(unit.teamId), ref moved);
+                if (profile != null)
+                    ExecuteManeuver(unit, profile, dir, GetTeamColor(unit.teamId), ref moved);
+                else if (def != null)
+                    ExecuteManeuverLegacy(unit, def, dir, GetTeamColor(unit.teamId), ref moved);
             }
 
             return moved;
@@ -324,6 +338,13 @@ namespace Zone5
         private static Color GetTeamColor(int teamId)
         {
             return GameEnum.GameColors.GetColorForTeam(teamId);
+        }
+
+        private ManeuverProfile ResolveManeuverProfile(string raw)
+        {
+            if (maneuverManager != null)
+                return maneuverManager.Resolve(raw);
+            return ManeuverProfileCatalog.Resolve(raw);
         }
 
         // ... Restored Methods ...
@@ -606,6 +627,23 @@ namespace Zone5
             }
         }
 
+        public bool TryGetLastEnd(AircraftUnit unit, out Vector3 end)
+        {
+            return lastEndByUnit.TryGetValue(unit, out end);
+        }
+
+        public void SetLastEnd(AircraftUnit unit, Vector3 end)
+        {
+            if (unit == null) return;
+            lastEndByUnit[unit] = end;
+        }
+
+        public void SyncLastEndFromTransform(AircraftUnit unit)
+        {
+            if (unit == null) return;
+            lastEndByUnit[unit] = (unit.ExhaustAnchor != null) ? unit.ExhaustAnchor.position : unit.transform.position;
+        }
+
         private void ClearTurnSegments()
         {
             turnSegmentsByUnit.Clear();
@@ -622,7 +660,43 @@ namespace Zone5
             list.Add(new Segment(start, end));
         }
 
-        private void ExecuteManeuver(AircraftUnit unit, ManeuverDef m, TurnDir dir, Color teamColor, ref int moved)
+        private void ExecuteManeuver(AircraftUnit unit, ManeuverProfile profile, TurnDir dir, Color teamColor, ref int moved)
+        {
+            if (trailManager == null || unit == null || profile == null) return;
+
+            if (!lastEndByUnit.TryGetValue(unit, out Vector3 start))
+                start = unit.ExhaustAnchor != null ? unit.ExhaustAnchor.position : unit.transform.position;
+
+            float fuWorld = MovementCore.GetFUWorld(unit);
+            Vector3 forward = MovementCore.GetForward(unit);
+            Color strongColor = GetStrongTeamColor(teamColor);
+
+            var path = new List<Vector3>();
+            profile.BuildWorldPoints(start, forward, fuWorld, dir, path);
+            if (path.Count < 2) return;
+
+            for (int i = 0; i < path.Count - 1; i++)
+                AddTurnSegment(unit, path[i], path[i + 1]);
+
+            Vector3 end = path[path.Count - 1];
+            Vector3 endHeading = profile.ResolveEndHeading(forward, dir, path);
+
+            lastEndByUnit[unit] = end;
+
+            if (animateMovement)
+            {
+                StartAircraftAnimation(unit, path, strongColor, endHeading);
+                moved++;
+            }
+            else
+            {
+                for (int i = 0; i < path.Count - 1; i++)
+                    trailManager.CreateSegment(unit, path[i], path[i + 1], strongColor);
+                MovementCore.AlignAndTeleportToEnd(unit, start, end, forward, endHeading);
+            }
+        }
+
+        private void ExecuteManeuverLegacy(AircraftUnit unit, ManeuverDef m, TurnDir dir, Color teamColor, ref int moved)
         {
             if (trailManager == null || unit == null || m == null) return;
 
@@ -641,12 +715,12 @@ namespace Zone5
                 AddTurnSegment(unit, start, end);
                 lastEndByUnit[unit] = end;
                 
-                if (animateMovement)
-                {
-                    StartAircraftAnimation(unit, new List<Vector3> { start, end }, strongColor);
-                    moved++;
-                }
-                else
+                    if (animateMovement)
+                    {
+                        StartAircraftAnimation(unit, new List<Vector3> { start, end }, strongColor, forward);
+                        moved++;
+                    }
+                    else
                 {
                     trailManager.CreateSegment(unit, start, end, strongColor);
                     MovementCore.AlignAndTeleportToEnd(unit, start, end, forward);
@@ -672,7 +746,7 @@ namespace Zone5
 
                     if (animateMovement)
                     {
-                        StartAircraftAnimation(unit, new List<Vector3> { p0, endStraight }, strongColor);
+                        StartAircraftAnimation(unit, new List<Vector3> { p0, endStraight }, strongColor, forward0);
                         moved++;
                     }
                     else
@@ -706,7 +780,8 @@ namespace Zone5
 
                 if (animateMovement)
                 {
-                    StartAircraftAnimation(unit, path, strongColor);
+                    Vector3 endHeading = MovementCore.Rotate2D(forward0, theta).normalized;
+                    StartAircraftAnimation(unit, path, strongColor, endHeading);
                     moved++;
                 }
                 else
@@ -752,7 +827,7 @@ namespace Zone5
             }
         }
 
-        private void StartAircraftAnimation(AircraftUnit unit, List<Vector3> path, Color color)
+        private void StartAircraftAnimation(AircraftUnit unit, List<Vector3> path, Color color, Vector3? endHeading = null)
         {
             if (unit == null || path == null || path.Count < 2) return;
 
@@ -761,10 +836,10 @@ namespace Zone5
 
             view.ConfigureTrail(trailManager, color, unit);
             view.SetPath(path.ToArray());
+            if (endHeading.HasValue)
+                view.SetFinalHeading(endHeading.Value);
             view.AnimatePath(movementDurationSeconds);
         }
-
-        private enum TurnDir { F, D, E }
 
         private static TurnDir ParseDirFromRaw(string raw)
         {
@@ -780,6 +855,14 @@ namespace Zone5
             };
         }
 
+        private static bool _warnedProfileFallback;
+        private static void WarnProfileFallbackOnce()
+        {
+            if (_warnedProfileFallback) return;
+            _warnedProfileFallback = true;
+            Debug.LogWarning("[MatchControllerMvp] ManeuverProfile not found. Falling back to ManeuverCatalog.");
+        }
+
         private static Color GetStrongTeamColor(Color baseColor)
         {
             return new Color(
@@ -791,3 +874,6 @@ namespace Zone5
         }
     }
 }
+
+
+

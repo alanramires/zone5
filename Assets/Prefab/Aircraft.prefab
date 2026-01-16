@@ -443,6 +443,7 @@ GameObject:
   - component: {fileID: 4914130234341858050}
   - component: {fileID: 2198000088835314356}
   - component: {fileID: 1912814916920024953}
+  - component: {fileID: 7173448315897845663}
   m_Layer: 0
   m_Name: Aircraft
   m_TagString: Untagged
@@ -748,16 +749,40 @@ MonoBehaviour:
   useProfileMaxAbsY: 1
   pathProfile: {fileID: 11400000, guid: 876530233be31c3488a9715b53714d1f, type: 2}
   debugAbsYNorm: 0.14
-  color: {r: 1, g: 0.5, b: 0, a: 0.6}
-  hatchFill: 1
+  fillColor: {r: 1, g: 0.5, b: 0, a: 0.35}
+  hatchColor: {r: 1, g: 0.5, b: 0, a: 0.75}
   hatchSteps: 16
-  coneMaterial: {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
-  renderLayerName: Trails
+  hatchWidth: 0.08
   sortingLayerName: Trails
   sortingOrder: 1
   zOffset: 0
-  meshFilter: {fileID: 0}
-  meshRenderer: {fileID: 0}
+  fillMaterial: {fileID: 0}
+  hatchMaterial: {fileID: 0}
+--- !u!114 &7173448315897845663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5402373510890763473}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e658b801fde546458535546912c728e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Zone5.MissileAimRectDebugView
+  origin: {fileID: 8075273571596226473}
+  exhaust: {fileID: 1813517315049696469}
+  missileProfile: {fileID: 11400000, guid: 72e8f5de6b5c8af4e8a68aabfa60ddd5, type: 2}
+  rangeFU: 10
+  fuWorld: 1
+  refNose: {fileID: 8075273571596226473}
+  refExhaust: {fileID: 1813517315049696469}
+  debugAbsYNorm: 0.15
+  fillColor: {r: 1, g: 0, b: 0, a: 0.6}
+  sortingLayerName: Trails
+  sortingOrder: 1
+  zOffset: 0
+  fillMaterial: {fileID: 0}
 --- !u!1 &6765471477177371809
 GameObject:
   m_ObjectHideFlags: 0

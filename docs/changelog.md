@@ -6,6 +6,10 @@
 - MissilePathProfile/Database com aliases e preview no editor
 - Debug: Missile Aim Cone visivel no Game/Scene com hatch e escala em FU
 - MissileManager usando profiles com fallback no catalogo antigo
+- ManeuverProfile com DB/Manager, resolver com fallback no catalogo legado
+- Preview de manobras no Editor com arco fisico + controle Bezier e nodes de debug
+- Heading final por curva (sem override manual) e ajuste de animacao do AircraftView
+- Sincronizacao de lastEnd entre debug e fluxo oficial
 
 ## 0.0.5 - evasao, dano e colisao entre aeronaves
 

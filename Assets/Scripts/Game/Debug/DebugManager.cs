@@ -12,6 +12,7 @@ public class DebugManager : MonoBehaviour
     public bool trailHitboxAlongsidePath = false;
     public bool collisionDetectedCircle = false;
     public bool missileAimCone = false;
+    public bool missileAimRect = false;
     public bool friendlyFireEnabled = false;
 
     public enum TrailHitboxMode
@@ -32,7 +33,7 @@ public class DebugManager : MonoBehaviour
     public bool applyEveryFrame = true;
 
     // Cache simples (pra não spammar Apply se você quiser desligar applyEveryFrame no futuro)
-    bool _lastMaster, _lastA, _lastM, _lastT, _lastC, _lastExt, _lastCone;
+    bool _lastMaster, _lastA, _lastM, _lastT, _lastC, _lastExt, _lastCone, _lastRect;
 
     void Start()
     {
@@ -61,6 +62,7 @@ public class DebugManager : MonoBehaviour
         _lastC = collisionDetectedCircle;
         _lastExt = extendedTrailHitboxTolerance;
         _lastCone = missileAimCone;
+        _lastRect = missileAimRect;
     }
 
     bool HasStateChanged()
@@ -71,7 +73,8 @@ public class DebugManager : MonoBehaviour
             || _lastT != trailHitboxAlongsidePath
             || _lastC != collisionDetectedCircle
             || _lastExt != extendedTrailHitboxTolerance
-            || _lastCone != missileAimCone;
+            || _lastCone != missileAimCone
+            || _lastRect != missileAimRect;
     }
 
     [ContextMenu("Apply Now")]
@@ -101,6 +104,7 @@ public class DebugManager : MonoBehaviour
         bool showTrailHB    = master && trailHitboxAlongsidePath;
         bool showCollision  = master && collisionDetectedCircle;
         bool showAimCone    = master && missileAimCone;
+        bool showAimRect    = master && missileAimRect;
 
         // =========================
         // AIRCRAFT: hitbox overlays
@@ -166,6 +170,12 @@ public class DebugManager : MonoBehaviour
         foreach (var c in cones)
         {
             if (c != null) c.SetVisible(showAimCone);
+        }
+
+        var rects = FindObjectsByType<Zone5.MissileAimRectDebugView>(FindObjectsSortMode.None);
+        foreach (var r in rects)
+        {
+            if (r != null) r.SetVisible(showAimRect);
         }
         // Se existir algum sistema antigo global de HB_Debug instanciado por outros scripts,
         // você pode forçar esconder aqui também procurando pelo nome:

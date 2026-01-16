@@ -4,7 +4,7 @@ namespace Zone5
 {
     /// <summary>
     /// Centralized math and alignment logic for Flight Units (FU) and aircraft movement.
-    /// Extracts common logic from MatchControllerMvp and ManeuverTrainController.
+    /// Extracts common logic from MatchControllerMvp and DebugManeuverController.
     /// </summary>
     public static class MovementCore
     {

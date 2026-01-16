@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 942823932710bf24295b5ad57fc05e6a, type: 3}
+  m_Name: 7G12D
+  m_EditorClassIdentifier: Assembly-CSharp::Zone5.ManeuverProfile
+  maneuverId: 7G12D
+  displayName: Curvas fechadas em alta-G (7G)
+  aliases:
+  - 7G12D
+  allowedDirs: 4
+  kind: 0
+  mainDir: 2
+  usage: 0
+  usedInAfterBurner: 0
+  gForce: 3
+  machTier: 12
+  evasionPenalty: 3
+  pathMode: 1
+  distanceFU: 2
+  turnAngleDeg: 45
+  curveBias: 0.25
+  useLegacyArc: 0
+  straightLeadInFrac: 0.3
+  bezierForwardHandleFrac: 0.6
+  bezierLateralFrac: 0.1
+  pointsNorm: []
+  enforceStraightStartEnd: 1
+  endHeadingSameAsStart: 0
+  useEndHeadingOverride: 0
+  endHeadingOverrideDeg: 0
+  previewColor: {r: 1, g: 0.6470588, b: 0, a: 1}
+  previewSamples: 24

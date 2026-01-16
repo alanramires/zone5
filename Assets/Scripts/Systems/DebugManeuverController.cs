@@ -2,11 +2,13 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.UI;
 
 namespace Zone5
 {
-    public class ManeuverTrainController : MonoBehaviour
+    [MovedFrom(true, "Zone5", "Assembly-CSharp", "ManeuverTrainController")]
+    public class DebugManeuverController : MonoBehaviour
     {
         [Header("UI")]
         public TMP_InputField blueInput;
@@ -19,6 +21,8 @@ namespace Zone5
         [Header("Refs")]
         public TrailManager trailManager;
         public MissileManager missileManager;
+        public ManeuverManager maneuverManager;
+        public MatchControllerMvp matchController;
 
         [Header("Debug")]
         public bool logAlsoCards = true;
@@ -26,7 +30,6 @@ namespace Zone5
         [Header("Collision (MVP)")]
         [Range(0.10f, 1.00f)] public float aircraftHitRadiusFU = 0.10f;
 
-        // Endpoint “persistente” por unidade (pra conectar no próximo turno)
         private readonly Dictionary<AircraftUnit, Vector3> lastEndByUnit = new();
         private readonly Dictionary<AircraftUnit, List<Segment>> turnSegmentsByUnit = new();
 
@@ -46,6 +49,10 @@ namespace Zone5
         {
             if (trailManager == null)
                 trailManager = FindFirstObjectByType<TrailManager>();
+            if (maneuverManager == null)
+                maneuverManager = FindFirstObjectByType<ManeuverManager>();
+            if (matchController == null)
+                matchController = FindFirstObjectByType<MatchControllerMvp>();
 
             CacheLastEnds();
 
@@ -78,8 +85,8 @@ namespace Zone5
             var blueUnit = FindTeamUnit(0);
             var redUnit  = FindTeamUnit(1);
 
-            string blueName = blueUnit != null ? blueUnit.unitId : "BLUE(sem caça)";
-            string redName  = redUnit  != null ? redUnit.unitId  : "RED(sem caça)";
+            string blueName = blueUnit != null ? blueUnit.unitId : "BLUE(sem caca)";
+            string redName  = redUnit  != null ? redUnit.unitId  : "RED(sem caca)";
 
             string blueRaw = blueInput ? blueInput.text : "";
             string redRaw  = redInput  ? redInput.text  : "";
@@ -94,34 +101,52 @@ namespace Zone5
             if (logAlsoCards)
                 Debug.Log($"Blue='{blueRaw}'  Red='{redRaw}'");
 
-            // ✅ AQUI: busca no catálogo (vazio/ruim -> fallback automático dentro do Resolve)
-            ManeuverDef blueM = ManeuverCatalog.Resolve(blueRaw);
-            ManeuverDef redM  = ManeuverCatalog.Resolve(redRaw);
+            ManeuverProfile blueProfile = ResolveManeuverProfile(blueRaw);
+            ManeuverProfile redProfile  = ResolveManeuverProfile(redRaw);
 
-            // Move e desenha
+            ManeuverDef blueFallback = null;
+            ManeuverDef redFallback = null;
+            if (blueProfile == null || redProfile == null)
+            {
+                WarnProfileFallbackOnce();
+                if (blueProfile == null) blueFallback = ManeuverCatalog.Resolve(blueRaw);
+                if (redProfile == null) redFallback = ManeuverCatalog.Resolve(redRaw);
+            }
+
             if (blueUnit != null)
             {
-                string validRaw = string.IsNullOrWhiteSpace(blueRaw) ? blueM.id : blueRaw;
-                int g = 1; if (validRaw.Length > 0 && char.IsDigit(validRaw[0])) int.TryParse(validRaw[0].ToString(), out g);
+                string fallbackId = blueFallback != null ? blueFallback.id : "";
+                string validRaw = string.IsNullOrWhiteSpace(blueRaw)
+                    ? (blueProfile != null ? blueProfile.maneuverId : fallbackId)
+                    : blueRaw;
+                int g = blueProfile != null ? Mathf.RoundToInt(blueProfile.gForce) : 1;
+                if (g <= 0 && validRaw.Length > 0 && char.IsDigit(validRaw[0])) int.TryParse(validRaw[0].ToString(), out g);
                 blueUnit.maneuverHistory.Add(new AircraftUnit.FlightLog { TurnIndex = 99, ManeuverCode = validRaw, RawInput = validRaw, GForce = g, Speed = 1f });
-                ExecuteManeuver(blueUnit, blueM, blueDir, GameEnum.GameColors.TeamBlue);
+                if (blueProfile != null)
+                    ExecuteManeuver(blueUnit, blueProfile, blueDir, GameEnum.GameColors.TeamBlue);
+                else if (blueFallback != null)
+                    ExecuteManeuverLegacy(blueUnit, blueFallback, blueDir, GameEnum.GameColors.TeamBlue);
             }
+
             if (redUnit != null)
             {
-                string validRaw = string.IsNullOrWhiteSpace(redRaw) ? redM.id : redRaw;
-                int g = 1; if (validRaw.Length > 0 && char.IsDigit(validRaw[0])) int.TryParse(validRaw[0].ToString(), out g);
+                string fallbackId = redFallback != null ? redFallback.id : "";
+                string validRaw = string.IsNullOrWhiteSpace(redRaw)
+                    ? (redProfile != null ? redProfile.maneuverId : fallbackId)
+                    : redRaw;
+                int g = redProfile != null ? Mathf.RoundToInt(redProfile.gForce) : 1;
+                if (g <= 0 && validRaw.Length > 0 && char.IsDigit(validRaw[0])) int.TryParse(validRaw[0].ToString(), out g);
                 redUnit.maneuverHistory.Add(new AircraftUnit.FlightLog { TurnIndex = 99, ManeuverCode = validRaw, RawInput = validRaw, GForce = g, Speed = 1f });
-                ExecuteManeuver(redUnit, redM, redDir, GameEnum.GameColors.TeamRed);
+                if (redProfile != null)
+                    ExecuteManeuver(redUnit, redProfile, redDir, GameEnum.GameColors.TeamRed);
+                else if (redFallback != null)
+                    ExecuteManeuverLegacy(redUnit, redFallback, redDir, GameEnum.GameColors.TeamRed);
             }
 
             if (MvpRules.IsMvp)
                 CheckPathCollisions(killedPairs);
             else
                 CheckBoundsCollisions(killedPairs);
-
-            // PÓS-MVP (2 cartas):
-            // Em vez de Resolve() (que pega 1 só), use ManeuverCatalog.ParseCombo("1G18+1G18")
-            // e execute em sequência encadeando endpoints (guardando o endpoint intermediário).
         }
 
         private void OnFire()
@@ -137,25 +162,55 @@ namespace Zone5
 
         private AircraftUnit FindTeamUnit(int teamId)
         {
-            // UnitSpawner cria unitId com sufixo "_T{teamId}"
             string key = $"_T{teamId}";
             return FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None)
                 .FirstOrDefault(u => u != null && !string.IsNullOrEmpty(u.unitId) && u.unitId.Contains(key));
         }
 
-        private void ExecuteManeuver(AircraftUnit unit, ManeuverDef m, TurnDir dir, Color teamColor)
+        private ManeuverProfile ResolveManeuverProfile(string raw)
         {
-            if (trailManager == null || unit == null || m == null) return;
+            if (maneuverManager != null)
+                return maneuverManager.Resolve(raw);
+            return ManeuverProfileCatalog.Resolve(raw);
+        }
 
-            if (!lastEndByUnit.TryGetValue(unit, out Vector3 start))
-                start = unit.ExhaustAnchor != null ? unit.ExhaustAnchor.position : unit.transform.position;
+        private void ExecuteManeuver(AircraftUnit unit, ManeuverProfile profile, TurnDir dir, Color teamColor)
+        {
+            if (trailManager == null || unit == null || profile == null) return;
+
+            Vector3 start = GetStartForUnit(unit);
 
             float fuWorld = MovementCore.GetFUWorld(unit);
             Vector3 forward = MovementCore.GetForward(unit);
-
             Color strongColor = GetStrongTeamColor(teamColor);
 
-            // === STRAIGHT ===
+            var path = new List<Vector3>();
+            profile.BuildWorldPoints(start, forward, fuWorld, dir, path);
+            if (path.Count < 2) return;
+
+            for (int i = 0; i < path.Count - 1; i++)
+            {
+                trailManager.CreateSegment(unit, path[i], path[i + 1], strongColor);
+                AddTurnSegment(unit, path[i], path[i + 1]);
+            }
+
+            Vector3 end = path[path.Count - 1];
+            Vector3 endHeading = profile.ResolveEndHeading(forward, dir, path);
+
+            MovementCore.AlignAndTeleportToEnd(unit, start, end, forward, endHeading);
+            SetLastEnd(unit, end);
+        }
+
+        private void ExecuteManeuverLegacy(AircraftUnit unit, ManeuverDef m, TurnDir dir, Color teamColor)
+        {
+            if (trailManager == null || unit == null || m == null) return;
+
+            Vector3 start = GetStartForUnit(unit);
+
+            float fuWorld = MovementCore.GetFUWorld(unit);
+            Vector3 forward = MovementCore.GetForward(unit);
+            Color strongColor = GetStrongTeamColor(teamColor);
+
             if (m.pathMode == PathMode.Straight)
             {
                 float distFU = Mathf.Max(0f, m.distanceFU);
@@ -165,14 +220,13 @@ namespace Zone5
                 AddTurnSegment(unit, start, end);
 
                 MovementCore.AlignAndTeleportToEnd(unit, start, end, forward);
-                lastEndByUnit[unit] = end;
+                SetLastEnd(unit, end);
                 return;
             }
 
-            // === ARC (3G/7G) ===
             if (m.pathMode == PathMode.BezierQuad)
             {
-                float sign = (dir == TurnDir.D) ? -1f : 1f; // D = clockwise
+                float sign = (dir == TurnDir.D) ? -1f : 1f;
                 Vector3 p0 = start;
                 Vector3 forward0 = forward.normalized;
 
@@ -186,11 +240,10 @@ namespace Zone5
                     trailManager.CreateSegment(unit, p0, endStraight, strongColor);
                     AddTurnSegment(unit, p0, endStraight);
                     MovementCore.AlignAndTeleportToEnd(unit, p0, endStraight, forward0);
-                    lastEndByUnit[unit] = endStraight;
+                    SetLastEnd(unit, endStraight);
                     return;
                 }
 
-                // Arc center and endpoint based on total arc length.
                 float radius = totalDist / Mathf.Abs(thetaRad);
                 Vector3 right0 = MovementCore.Rotate2D(forward0, -90f).normalized;
                 float thetaSign = Mathf.Sign(thetaRad);
@@ -243,11 +296,10 @@ namespace Zone5
                     unit.transform.position += (exhaustPinned - exhaustAfter);
                 }
 
-                lastEndByUnit[unit] = (unit.ExhaustAnchor != null) ? unit.ExhaustAnchor.position : p2;
+                Vector3 finalEnd = (unit.ExhaustAnchor != null) ? unit.ExhaustAnchor.position : p2;
+                SetLastEnd(unit, finalEnd);
             }
         }
-
-
 
         private static Color GetStrongTeamColor(Color baseColor)
         {
@@ -259,9 +311,6 @@ namespace Zone5
             );
         }
 
-        private enum TurnDir { F, D, E }
-
-        // HELPERS
         private static TurnDir ParseDirFromRaw(string raw)
         {
             string s = (raw ?? "").Trim().ToUpperInvariant();
@@ -277,7 +326,31 @@ namespace Zone5
             };
         }
 
+        private static bool _warnedProfileFallback;
+        private static void WarnProfileFallbackOnce()
+        {
+            if (_warnedProfileFallback) return;
+            _warnedProfileFallback = true;
+            Debug.LogWarning("[DebugManeuverController] ManeuverProfile not found. Falling back to ManeuverCatalog.");
+        }
 
+        private Vector3 GetStartForUnit(AircraftUnit unit)
+        {
+            if (unit == null) return Vector3.zero;
+            if (matchController != null && matchController.TryGetLastEnd(unit, out var sharedStart))
+                return sharedStart;
+            if (lastEndByUnit.TryGetValue(unit, out var localStart))
+                return localStart;
+            return unit.ExhaustAnchor != null ? unit.ExhaustAnchor.position : unit.transform.position;
+        }
+
+        private void SetLastEnd(AircraftUnit unit, Vector3 end)
+        {
+            if (unit == null) return;
+            lastEndByUnit[unit] = end;
+            if (matchController != null)
+                matchController.SetLastEnd(unit, end);
+        }
 
         private void CheckAircraftCollision(AircraftUnit a, AircraftUnit b, HashSet<string> killedPairs)
         {
@@ -303,8 +376,6 @@ namespace Zone5
                 b.Die();
             }
         }
-
-
 
         private void ClearTurnSegments()
         {
@@ -386,14 +457,5 @@ namespace Zone5
             }
             return false;
         }
-
-
-
-
     }
 }
-
-
-
-
-

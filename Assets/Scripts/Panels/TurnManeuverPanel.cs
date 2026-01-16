@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.UI;
 using Zone5;
 
-public class PanelManeuver : MonoBehaviour
+[MovedFrom(true, "", "Assembly-CSharp", "PanelManeuver")]
+public class TurnManeuverPanel : MonoBehaviour
 {
     [Header("UI Refs")]
     [SerializeField] private TMP_Text pilotText;
@@ -253,7 +255,7 @@ public class PanelManeuver : MonoBehaviour
         var unit = pendingUnits[currentIndex];
         var initPhase = turnManager.sheet.phase; // Capture phase BEFORE
         
-        Debug.Log($"[PanelManeuver] Submitting for {unit.callSign}: {code} (Phase: {initPhase})");
+        Debug.Log($"[TurnManeuverPanel] Submitting for {unit.callSign}: {code} (Phase: {initPhase})");
 
         if (matchController != null)
         {
@@ -270,7 +272,7 @@ public class PanelManeuver : MonoBehaviour
         {
             // Phase changed! HandleStateChanged has already reset index to 0.
             // Do NOT increment. Do NOT refresh.
-            Debug.Log($"[PanelManeuver] Phase changed to {turnManager.sheet.phase}. preventing index increment.");
+            Debug.Log($"[TurnManeuverPanel] Phase changed to {turnManager.sheet.phase}. preventing index increment.");
             return;
         }
 
