@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.8 - 0.0.8 Scanner de alvo e identificacao do aviao
+## 0.0.9 - 0.0.9 Scanner de alvo e identificacao do aviao
 
 - HUD de piloto no prefab (callsign + cor do time)
 - MissilePathProfile/Database com aliases e preview no editor
