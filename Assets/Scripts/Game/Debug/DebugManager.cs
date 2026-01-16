@@ -11,6 +11,7 @@ public class DebugManager : MonoBehaviour
     public bool missileHitbox = false;
     public bool trailHitboxAlongsidePath = false;
     public bool collisionDetectedCircle = false;
+    public bool missileAimCone = false;
     public bool friendlyFireEnabled = false;
 
     public enum TrailHitboxMode
@@ -31,7 +32,7 @@ public class DebugManager : MonoBehaviour
     public bool applyEveryFrame = true;
 
     // Cache simples (pra não spammar Apply se você quiser desligar applyEveryFrame no futuro)
-    bool _lastMaster, _lastA, _lastM, _lastT, _lastC, _lastExt;
+    bool _lastMaster, _lastA, _lastM, _lastT, _lastC, _lastExt, _lastCone;
 
     void Start()
     {
@@ -59,6 +60,7 @@ public class DebugManager : MonoBehaviour
         _lastT = trailHitboxAlongsidePath;
         _lastC = collisionDetectedCircle;
         _lastExt = extendedTrailHitboxTolerance;
+        _lastCone = missileAimCone;
     }
 
     bool HasStateChanged()
@@ -68,7 +70,8 @@ public class DebugManager : MonoBehaviour
             || _lastM != missileHitbox
             || _lastT != trailHitboxAlongsidePath
             || _lastC != collisionDetectedCircle
-            || _lastExt != extendedTrailHitboxTolerance;
+            || _lastExt != extendedTrailHitboxTolerance
+            || _lastCone != missileAimCone;
     }
 
     [ContextMenu("Apply Now")]
@@ -97,6 +100,7 @@ public class DebugManager : MonoBehaviour
         bool showMissileHB  = master && missileHitbox;
         bool showTrailHB    = master && trailHitboxAlongsidePath;
         bool showCollision  = master && collisionDetectedCircle;
+        bool showAimCone    = master && missileAimCone;
 
         // =========================
         // AIRCRAFT: hitbox overlays
@@ -155,6 +159,14 @@ public class DebugManager : MonoBehaviour
             // (não faz nada ainda)
         }
 
+        // =========================
+        // AIM CONE: debug view
+        // =========================
+        var cones = FindObjectsByType<Zone5.MissileConeDebugView>(FindObjectsSortMode.None);
+        foreach (var c in cones)
+        {
+            if (c != null) c.SetVisible(showAimCone);
+        }
         // Se existir algum sistema antigo global de HB_Debug instanciado por outros scripts,
         // você pode forçar esconder aqui também procurando pelo nome:
         // (opcional, mas útil pra matar “lixo” legado)
@@ -165,3 +177,5 @@ public class DebugManager : MonoBehaviour
         }
     }
 }
+
+

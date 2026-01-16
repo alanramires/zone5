@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Zone5
 {
@@ -122,8 +125,14 @@ namespace Zone5
                 fuFactor = MovementCore.GetFUWorld(dummy);
                 
                 // Cleanup dummy immediately - ALWAYS to prevent ghost
-                if (Application.isPlaying) Destroy(dummy.gameObject); // Destroy is delayed...
-                DestroyImmediate(dummy.gameObject); // Force kill now
+                if (Application.isPlaying)
+                {
+                    Destroy(dummy.gameObject); // Destroy is delayed...
+                }
+                else
+                {
+                    DestroyImmediate(dummy.gameObject); // Force kill now
+                }
             }
 
             // Restore MVP Defaults if Inspector values are Zero (Auto-Layout)
@@ -319,8 +328,16 @@ namespace Zone5
             {
                 var child = transform.GetChild(i);
             #if UNITY_EDITOR
-                if (!Application.isPlaying) DestroyImmediate(child.gameObject);
-                else Destroy(child.gameObject);
+                if (!Application.isPlaying)
+                {
+                    if (Selection.activeObject == child.gameObject)
+                        Selection.activeObject = null;
+                    DestroyImmediate(child.gameObject);
+                }
+                else
+                {
+                    Destroy(child.gameObject);
+                }
             #else
                 Destroy(child.gameObject);
             #endif

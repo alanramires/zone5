@@ -20,3 +20,5 @@ MonoBehaviour:
   missilesMax: 6
   vulcanUnlimited: 1
   tokenLengthFU: 1
+  colliderSize: {x: 1.8, y: 1.8}
+  colliderOffset: {x: 0, y: 0}

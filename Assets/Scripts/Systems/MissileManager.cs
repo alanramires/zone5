@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -37,6 +38,7 @@ namespace Zone5
         public float missileTrailWidth = 0.18f;
 
         [Header("Gameplay (MVP test)")]
+        [SerializeField] private MissilePathDatabase missilePathDb;
         [Min(0.1f)] public float defaultRangeFU = 10f; // Phoenix / R-27
         public MissileProfile defaultProfile;          // opcional, se quiser usar profile já
 
@@ -164,10 +166,13 @@ namespace Zone5
             float rangeFU = (defaultProfile != null) ? defaultProfile.rangeFU : defaultRangeFU;
 
             // resolve path no catalogo (M10F, L1, S2, etc)
-            var pathDef = MissilePathCatalog.Resolve(pathRaw);
+            MissilePathProfile pathProfile = missilePathDb != null ? missilePathDb.Resolve(pathRaw) : null;
+            var pathDef = pathProfile == null ? MissilePathCatalog.Resolve(pathRaw) : null;
 
             // converte pointsNorm -> world
-            var controlPts = BuildWorldPoints(start, forward, left, fuWorld, rangeFU, pathDef);
+            var controlPts = pathProfile != null
+                ? BuildWorldPoints(start, forward, left, fuWorld, rangeFU, pathProfile.GetSortedPoints())
+                : BuildWorldPoints(start, forward, left, fuWorld, rangeFU, pathDef);
 
             // suaviza com Catmull-Rom
             var smoothPts = SmoothCatmullRom(controlPts, samplesPerSegment: 10);
@@ -458,7 +463,6 @@ namespace Zone5
                 v.z
             );
         }
-
         private static Vector3[] BuildWorldPoints(
             Vector3 start,
             Vector3 forward,
@@ -470,11 +474,24 @@ namespace Zone5
             if (def == null || def.pointsNorm == null || def.pointsNorm.Count < 2)
                 return new[] { start, start + forward * (rangeFU * fuWorld) };
 
-            var pts = new Vector3[def.pointsNorm.Count];
+            return BuildWorldPoints(start, forward, left, fuWorld, rangeFU, def.pointsNorm);
+        }
+        private static Vector3[] BuildWorldPoints(
+            Vector3 start,
+            Vector3 forward,
+            Vector3 left,
+            float fuWorld,
+            float rangeFU,
+            IList<Vector2> pointsNorm)
+        {
+            if (pointsNorm == null || pointsNorm.Count < 2)
+                return new[] { start, start + forward * (rangeFU * fuWorld) };
 
-            for (int i = 0; i < def.pointsNorm.Count; i++)
+            var pts = new Vector3[pointsNorm.Count];
+
+            for (int i = 0; i < pointsNorm.Count; i++)
             {
-                var p = def.pointsNorm[i];
+                var p = pointsNorm[i];
 
                 float xFU = p.x * rangeFU;
                 float yFU = p.y * rangeFU;
@@ -856,3 +873,7 @@ namespace Zone5
 
     }
 }
+
+
+
+

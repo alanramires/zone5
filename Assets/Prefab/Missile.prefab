@@ -196,7 +196,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Zone5.HitboxOverlay
   sr: {fileID: 0}
-  visible: 1
 --- !u!212 &2830743764604157507
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -267,6 +266,7 @@ GameObject:
   - component: {fileID: 7483065710324820363}
   - component: {fileID: 6539671569950803902}
   - component: {fileID: 8248246500665293182}
+  - component: {fileID: 6700536577863355659}
   m_Layer: 0
   m_Name: Missile
   m_TagString: Untagged
@@ -484,6 +484,53 @@ MonoBehaviour:
   exhaustAnchor: {fileID: 1813517315049696469}
   noseAnchor: {fileID: 8075273571596226473}
   trailSegments: []
+  debugTrailSegments: []
+--- !u!61 &6700536577863355659
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5402373510890763473}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 0.7910156, y: 1.8554688}
+    newSize: {x: 2, y: 2}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 0.7910156, y: 1.8554688}
+  m_EdgeRadius: 0.02
 --- !u!1 &6765471477177371809
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,12 +1,11 @@
 # Changelog
 
-## 0.0.8 - Colisões e movimentos
+## 0.0.8 - 0.0.8 Scanner de alvo e identificacao do aviao
 
-- Movimento animado para aeronaves com trilha progressiva (AircraftView) e sincronismo de tempo
-- Colisão de aeronaves baseada em Collider2D real (Distance/isOverlapped), com ajuste por UnitProfile
-- Fim de partida como estado explícito (MatchEnded) e painel tático atualizado
-- Pontuação temporária por falhas de evasão, resolução de empate e limpeza por rodada
-- Debug: friendly fire toggle, trail hitbox laranja restaurado e defaults de debug desligados
+- HUD de piloto no prefab (callsign + cor do time)
+- MissilePathProfile/Database com aliases e preview no editor
+- Debug: Missile Aim Cone visivel no Game/Scene com hatch e escala em FU
+- MissileManager usando profiles com fallback no catalogo antigo
 
 ## 0.0.5 - evasao, dano e colisao entre aeronaves
 
