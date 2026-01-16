@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.10 - 0.0.10 Maneuver system updates
+
+- ManeuverProfile com DB/Manager, resolver com fallback no catalogo legado
+- Preview de manobras no Editor com arco fisico + controle Bezier e nodes de debug
+- Heading final por curva (sem override manual) e ajuste de animacao do AircraftView
+- Sincronizacao de lastEnd entre debug e fluxo oficial
+
 ## 0.0.9 - 0.0.9 Scanner de alvo e identificacao do aviao
 
 - HUD de piloto no prefab (callsign + cor do time)
