@@ -12,10 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 942823932710bf24295b5ad57fc05e6a, type: 3}
   m_Name: 7G18E
   m_EditorClassIdentifier: Assembly-CSharp::Zone5.ManeuverProfile
-  maneuverId: 7G12E
-  displayName: Curvas fechadas em alta-G (7G)
+  maneuverId: 7G18E
+  displayName: Extreme-G Turn Left
   aliases:
   - 7G18E
+  - 7GE
   allowedDirs: 2
   kind: 0
   mainDir: 3
@@ -25,11 +26,11 @@ MonoBehaviour:
   machTier: 18
   evasionPenalty: 2
   pathMode: 1
-  distanceFU: 3
+  distanceFU: 2.9
   turnAngleDeg: 30
   curveBias: 0.25
   useLegacyArc: 0
-  straightLeadInFrac: 0.3
+  straightLeadInFrac: 0.35
   bezierForwardHandleFrac: 0.6
   bezierLateralFrac: 0.2
   pointsNorm: []
@@ -39,3 +40,36 @@ MonoBehaviour:
   endHeadingOverrideDeg: 0
   previewColor: {r: 1, g: 0, b: 0, a: 1}
   previewSamples: 24
+  useVfx: 1
+  vfxMode: 0
+  vfxProgress:
+  - p: 0
+    rollXDeg: 0
+    rollYDeg: 0
+    scale: {x: 0, y: 0}
+  - p: 0.2
+    rollXDeg: -12
+    rollYDeg: 20
+    scale: {x: 0, y: 0}
+  - p: 0.45
+    rollXDeg: -30
+    rollYDeg: 40
+    scale: {x: 0, y: 0}
+  - p: 0.75
+    rollXDeg: -30
+    rollYDeg: 40
+    scale: {x: 0, y: 0}
+  - p: 0.95
+    rollXDeg: -10
+    rollYDeg: 15
+    scale: {x: 0, y: 0}
+  - p: 1
+    rollXDeg: 0
+    rollYDeg: 0
+    scale: {x: 0, y: 0}
+  vfxXY: []
+  backfaceEnabled: 1
+  backfaceThresholdDeg: 90
+  backfaceLerp: 0.2
+  backfaceColor: {r: 0, g: 0, b: 0, a: 1}
+  useSmooth: 1

@@ -10,38 +10,46 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 942823932710bf24295b5ad57fc05e6a, type: 3}
-  m_Name: 0G
+  m_Name: 5G
   m_EditorClassIdentifier: Assembly-CSharp::Zone5.ManeuverProfile
-  maneuverId: 0G
-  displayName: Air Brake
+  maneuverId: 5G
+  displayName: 5G
   aliases:
-  - 0G
-  - 0G06
-  - 0G06F
-  - AIR BRAKE
-  - AIR BRAKE
-  - AIRBRAKE
-  - BRAKE
-  allowedDirs: 1
-  kind: 1
-  mainDir: 1
-  usage: 1
+  - 5G
+  allowedDirs: 7
+  kind: 0
+  mainDir: 0
+  usage: 0
   usedInAfterBurner: 0
-  gForce: 0
-  machTier: 6
-  evasionPenalty: 3
-  pathMode: 0
-  distanceFU: 1
+  gForce: 5
+  machTier: 9
+  evasionPenalty: 1
+  pathMode: 2
+  distanceFU: 2
   turnAngleDeg: 0
   curveBias: 1
   useLegacyArc: 0
   straightLeadInFrac: 0
   bezierForwardHandleFrac: 0.35
   bezierLateralFrac: 0.65
-  pointsNorm: []
-  enforceStraightStartEnd: 1
-  endHeadingSameAsStart: 1
+  pointsNorm:
+  - {x: 0, y: 0}
+  - {x: 1, y: 0}
+  - {x: 0.8, y: 0.3}
+  - {x: 0.2, y: 0.3}
+  - {x: 0.4, y: 0.5}
+  enforceStraightStartEnd: 0
+  endHeadingSameAsStart: 0
   useEndHeadingOverride: 0
   endHeadingOverrideDeg: 0
   previewColor: {r: 1, g: 0.5, b: 0, a: 0.6}
   previewSamples: 24
+  useVfx: 0
+  vfxMode: 1
+  vfxProgress: []
+  vfxXY: []
+  backfaceEnabled: 1
+  backfaceThresholdDeg: 90
+  backfaceLerp: 0.2
+  backfaceColor: {r: 0, g: 0, b: 0, a: 1}
+  useSmooth: 1

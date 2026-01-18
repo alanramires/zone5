@@ -218,7 +218,7 @@ namespace Zone5
             var victims = new HashSet<AircraftUnit>();
 
             // 1. Detect Collisions (ONLY detection, no killing yet)
-            // FORCE Token Collision (Bounds) as per user request
+            // Aircraft should not collide with aircraft trails (no TRON behavior).
             CollectBoundsCollisions(victims);
 
             // 2. If collision, Log & Wait
@@ -685,7 +685,7 @@ namespace Zone5
 
             if (animateMovement)
             {
-                StartAircraftAnimation(unit, path, strongColor, endHeading);
+                StartAircraftAnimation(unit, path, strongColor, profile, dir, start, forward, fuWorld, endHeading);
                 moved++;
             }
             else
@@ -693,6 +693,7 @@ namespace Zone5
                 for (int i = 0; i < path.Count - 1; i++)
                     trailManager.CreateSegment(unit, path[i], path[i + 1], strongColor);
                 MovementCore.AlignAndTeleportToEnd(unit, start, end, forward, endHeading);
+                unit.ResetVisualPose(unit.visualSprite != null ? unit.visualSprite.color : GetTeamColor(unit.teamId));
             }
         }
 
@@ -717,13 +718,14 @@ namespace Zone5
                 
                     if (animateMovement)
                     {
-                        StartAircraftAnimation(unit, new List<Vector3> { start, end }, strongColor, forward);
+                        StartAircraftAnimation(unit, new List<Vector3> { start, end }, strongColor, null, dir, start, forward, fuWorld, forward);
                         moved++;
                     }
                     else
                 {
                     trailManager.CreateSegment(unit, start, end, strongColor);
                     MovementCore.AlignAndTeleportToEnd(unit, start, end, forward);
+                    unit.ResetVisualPose(unit.visualSprite != null ? unit.visualSprite.color : GetTeamColor(unit.teamId));
                 }
                 return;
             }
@@ -746,7 +748,7 @@ namespace Zone5
 
                     if (animateMovement)
                     {
-                        StartAircraftAnimation(unit, new List<Vector3> { p0, endStraight }, strongColor, forward0);
+                        StartAircraftAnimation(unit, new List<Vector3> { p0, endStraight }, strongColor, null, dir, p0, forward0, fuWorld, forward0);
                         moved++;
                     }
                     else
@@ -781,7 +783,7 @@ namespace Zone5
                 if (animateMovement)
                 {
                     Vector3 endHeading = MovementCore.Rotate2D(forward0, theta).normalized;
-                    StartAircraftAnimation(unit, path, strongColor, endHeading);
+                    StartAircraftAnimation(unit, path, strongColor, null, dir, start, forward0, fuWorld, endHeading);
                     moved++;
                 }
                 else
@@ -823,11 +825,21 @@ namespace Zone5
                         Vector3 exhaustAfter = (unit.ExhaustAnchor != null) ? unit.ExhaustAnchor.position : unit.transform.position;
                         unit.transform.position += (exhaustPinned - exhaustAfter);
                     }
+                    unit.ResetVisualPose(unit.visualSprite != null ? unit.visualSprite.color : GetTeamColor(unit.teamId));
                 }
             }
         }
 
-        private void StartAircraftAnimation(AircraftUnit unit, List<Vector3> path, Color color, Vector3? endHeading = null)
+        private void StartAircraftAnimation(
+            AircraftUnit unit,
+            List<Vector3> path,
+            Color color,
+            ManeuverProfile profile,
+            TurnDir dir,
+            Vector3 start,
+            Vector3 forward,
+            float fuWorld,
+            Vector3? endHeading = null)
         {
             if (unit == null || path == null || path.Count < 2) return;
 
@@ -835,6 +847,7 @@ namespace Zone5
             if (view == null) view = unit.gameObject.AddComponent<AircraftView>();
 
             view.ConfigureTrail(trailManager, color, unit);
+            view.ConfigureVfx(profile, dir, start, forward, fuWorld);
             view.SetPath(path.ToArray());
             if (endHeading.HasValue)
                 view.SetFinalHeading(endHeading.Value);

@@ -143,10 +143,8 @@ namespace Zone5
                     ExecuteManeuverLegacy(redUnit, redFallback, redDir, GameEnum.GameColors.TeamRed);
             }
 
-            if (MvpRules.IsMvp)
-                CheckPathCollisions(killedPairs);
-            else
-                CheckBoundsCollisions(killedPairs);
+            // Aircraft should not collide with aircraft trails (no TRON behavior).
+            CheckBoundsCollisions(killedPairs);
         }
 
         private void OnFire()

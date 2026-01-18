@@ -10,38 +10,36 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 942823932710bf24295b5ad57fc05e6a, type: 3}
-  m_Name: 0G
+  m_Name: 2GE
   m_EditorClassIdentifier: Assembly-CSharp::Zone5.ManeuverProfile
-  maneuverId: 0G
-  displayName: Air Brake
+  maneuverId: 2GE
+  displayName: Tunneou Esquerdo
   aliases:
-  - 0G
-  - 0G06
-  - 0G06F
-  - AIR BRAKE
-  - AIR BRAKE
-  - AIRBRAKE
-  - BRAKE
-  allowedDirs: 1
-  kind: 1
-  mainDir: 1
+  - 2GE
+  allowedDirs: 11
+  kind: 0
+  mainDir: 3
   usage: 1
   usedInAfterBurner: 0
-  gForce: 0
-  machTier: 6
-  evasionPenalty: 3
-  pathMode: 0
-  distanceFU: 1
+  gForce: 2
+  machTier: 9
+  evasionPenalty: 1
+  pathMode: 2
+  distanceFU: 2.2
   turnAngleDeg: 0
-  curveBias: 1
+  curveBias: 0.55
   useLegacyArc: 0
   straightLeadInFrac: 0
-  bezierForwardHandleFrac: 0.35
-  bezierLateralFrac: 0.65
-  pointsNorm: []
-  enforceStraightStartEnd: 1
+  bezierForwardHandleFrac: 0
+  bezierLateralFrac: 0
+  pointsNorm:
+  - {x: 0, y: 0}
+  - {x: 0.6, y: 0}
+  - {x: 0.8, y: 0.6}
+  - {x: 1, y: 0.6}
+  enforceStraightStartEnd: 0
   endHeadingSameAsStart: 1
   useEndHeadingOverride: 0
   endHeadingOverrideDeg: 0
-  previewColor: {r: 1, g: 0.5, b: 0, a: 0.6}
+  previewColor: {r: 1, g: 0, b: 0, a: 1}
   previewSamples: 24

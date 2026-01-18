@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: 7G06E
   m_EditorClassIdentifier: Assembly-CSharp::Zone5.ManeuverProfile
   maneuverId: 7G06E
-  displayName: Curvas fechadas em alta-G (7G)
+  displayName: Snap Turn Left
   aliases:
   - 7G06E
+  - CE
   allowedDirs: 2
   kind: 0
   mainDir: 3
@@ -39,3 +40,36 @@ MonoBehaviour:
   endHeadingOverrideDeg: 0
   previewColor: {r: 1, g: 0.6470588, b: 0, a: 1}
   previewSamples: 24
+  useVfx: 1
+  vfxMode: 0
+  vfxProgress:
+  - p: 0
+    rollXDeg: 0
+    rollYDeg: 0
+    scale: {x: 0, y: 0}
+  - p: 0.2
+    rollXDeg: -12
+    rollYDeg: 20
+    scale: {x: 0, y: 0}
+  - p: 0.45
+    rollXDeg: -30
+    rollYDeg: 40
+    scale: {x: 0, y: 0}
+  - p: 0.75
+    rollXDeg: -30
+    rollYDeg: 40
+    scale: {x: 0, y: 0}
+  - p: 0.95
+    rollXDeg: -10
+    rollYDeg: 15
+    scale: {x: 0, y: 0}
+  - p: 1
+    rollXDeg: 0
+    rollYDeg: 0
+    scale: {x: 0, y: 0}
+  vfxXY: []
+  backfaceEnabled: 1
+  backfaceThresholdDeg: 90
+  backfaceLerp: 0.2
+  backfaceColor: {r: 0, g: 0, b: 0, a: 1}
+  useSmooth: 1

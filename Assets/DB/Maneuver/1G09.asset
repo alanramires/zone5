@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 1G09
   m_EditorClassIdentifier: Assembly-CSharp::Zone5.ManeuverProfile
   maneuverId: 1G09F
-  displayName: Reta Acelerando
+  displayName: Cruise Advance
   aliases:
   - 1G
   - 1G09
@@ -29,6 +29,8 @@ MonoBehaviour:
   pathMode: 0
   distanceFU: 1.5
   turnAngleDeg: 0
+  curveBias: 1
+  useLegacyArc: 0
   straightLeadInFrac: 0
   bezierForwardHandleFrac: 0.35
   bezierLateralFrac: 0.65

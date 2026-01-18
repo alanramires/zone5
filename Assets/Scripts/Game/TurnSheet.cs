@@ -35,6 +35,7 @@ namespace Zone5
             public int assists;
         }
 
+        // Checks if all alive players have indicated readiness for the given phase
         public bool AllReadyForPhase(GameEnum.TurnState phaseState)
         {
             if (rows == null || rows.Count == 0)
@@ -81,12 +82,14 @@ namespace Zone5
             }
         }
 
+        // Applies default selections for all players who haven't made a choice yet, based on the phase
         public void ApplyDefaultsForPhase(GameEnum.TurnState phaseState)
         {
             if (rows == null) return;
 
             switch (phaseState)
             {
+                
                 case GameEnum.TurnState.SelectManeuver:
                 case GameEnum.TurnState.WaitManeuverConfirm:
                     for (int i = 0; i < rows.Count; i++)
@@ -122,6 +125,7 @@ namespace Zone5
             }
         }
 
+        // Prepares the sheet for a new turn: clears all maneuver/weapon/missile selections and readiness
         public void ResetForNewTurn()
         {
             if (rows == null) return;

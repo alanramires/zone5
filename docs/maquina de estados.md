@@ -23,3 +23,13 @@ Com base nas posições atualizadas os pilotos escolhem seus misseis...
    5b.  Iceman abatido: Viper obteve 2 pontos. Viper é o vencedor (nao teve mais concorrentes), Viper ganha 1 abate
 6. O sistema avança a fase para "resolução do turno"  (aguarda 10s pra inspeção) e aeronaves abatidas são removidas do campo, todos os misseis são removidos do campo
   7. O sistema checka por condições de vitoria. Se ninguem ganhou avança turno e nova rodada começa. Se houve vencedor o jogo termina.
+
+## Como a maquina de estados funciona hoje (resumo)
+
+- A logica de turno vive no TurnManager; ele guarda o estado atual em TurnSheet.phase e emite eventos quando muda.
+- O fluxo segue os estados em GameEnum.TurnState: selecionar manobra, declarar arma, revelar/mover, colisao, missil, resolver dano e fim de rodada.
+- O TurnSheet centraliza entradas e flags de pronto; o TurnManager so avanca quando AllReadyForPhase passa.
+- MatchControllerMvp executa as fases ativas (mover, colisao, misseis, dano) reagindo ao estado do turno.
+- A UI (TurnManeuverPanel e Panel Tactical) escuta eventos do TurnManager/TurnStateManager e nao altera a logica.
+
+  7. O sistema checka por condições de vitoria. Se ninguem ganhou avança turno e nova rodada começa. Se houve vencedor o jogo termina.

@@ -27,6 +27,7 @@ namespace Zone5
         public bool matchEnded = false;
         public int winnerTeam = -1;
 
+        
         private void Start()
         {
             if (sheet == null)
@@ -44,6 +45,7 @@ namespace Zone5
             EnterState(sheet.phase);
         }
 
+        // Registers all AircraftUnit instances in the scene with valid player IDs
         private void RegisterFromScene()
         {
             var units = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None);
@@ -55,6 +57,7 @@ namespace Zone5
             }
         }
 
+        // Retrieves existing or creates new PlayerRow for given playerId
         public TurnSheet.PlayerRow GetOrCreatePlayerRow(int playerId)
         {
             if (playerId <= 0) return null;
@@ -74,6 +77,7 @@ namespace Zone5
             return data;
         }
 
+        // Registers or updates a player's row based on the given AircraftUnit
         public void RegisterUnit(AircraftUnit unit)
         {
             if (unit == null) return;
@@ -88,6 +92,7 @@ namespace Zone5
             NotifySheetChanged();
         }
 
+        // Sets a player's alive status
         public void SetAlive(int playerId, bool isAlive)
         {
             var row = GetOrCreatePlayerRow(playerId);
@@ -96,11 +101,13 @@ namespace Zone5
             NotifySheetChanged();
         }
 
+        // Notifies listeners that the turn sheet has changed
         public void NotifySheetChanged()
         {
             OnSheetChanged?.Invoke();
         }
 
+        // Advances the turn state if all players are ready for the current phase
         public void AdvanceButton()
         {
             if (matchEnded) return;
@@ -110,6 +117,7 @@ namespace Zone5
             TryAdvance();
         }
 
+        // Attempts to advance the turn state if all players are ready
         public void TryAdvance()
         {
             if (matchEnded) return;
@@ -118,6 +126,7 @@ namespace Zone5
                 NextState();
         }
 
+        // Advances to the next turn state based on the current state and game logic
         private void NextState()
         {
             if (matchEnded) return;
@@ -175,6 +184,7 @@ namespace Zone5
             EnterState(sheet.phase);
         }
 
+        // Enters a specific turn state and performs associated actions
         private void EnterState(GameEnum.TurnState state)
         {
             if (logStateChanges)
@@ -218,6 +228,7 @@ namespace Zone5
             OnStateChanged?.Invoke();
         }
 
+        // Clears temporary damage records from all aircraft units at the end of a turn
         private void ClearTemporaryDamage()
         {
             var units = FindObjectsByType<AircraftUnit>(FindObjectsSortMode.None);
@@ -235,6 +246,7 @@ namespace Zone5
             Debug.Log($"[TEMP CLEAR] Cleared temporary hit points for {cleared} aircraft.");
         }
 
+        // Sets the match as ended with the specified winning team
         public void SetMatchEnded(int winnerTeamId)
         {
             matchEnded = true;
@@ -244,11 +256,14 @@ namespace Zone5
             EnterState(GameEnum.TurnState.MatchEnded);
         }
 
+        // Waits for a delay and then advances to the next state
         private System.Collections.IEnumerator WaitAndAdvanceRoutine()
         {
             yield return new WaitForSeconds(endRoundDelaySeconds);
             NextState();
         }
+
+        // Checks if any alive player has selected a missile weapon
         private bool HasAnyActiveMissile()
         {
             if (sheet == null || sheet.rows == null) return false;

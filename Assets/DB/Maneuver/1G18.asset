@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 1G18
   m_EditorClassIdentifier: Assembly-CSharp::Zone5.ManeuverProfile
   maneuverId: 1G18F
-  displayName: "Reta R\xE1pida"
+  displayName: Full Throttle
   aliases:
   - 1G18
   - 1G18F
@@ -28,6 +28,8 @@ MonoBehaviour:
   pathMode: 0
   distanceFU: 3
   turnAngleDeg: 0
+  curveBias: 1
+  useLegacyArc: 0
   straightLeadInFrac: 0
   bezierForwardHandleFrac: 0.35
   bezierLateralFrac: 0.65

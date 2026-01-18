@@ -65,6 +65,17 @@ public class ManeuverProfileEditor : Editor
         DrawField("previewColor");
         DrawField("previewSamples");
 
+        DrawSection("VFX");
+        DrawField("useVfx");
+        DrawField("vfxMode");
+        DrawField("vfxProgress", true);
+        DrawField("vfxXY", true);
+        DrawField("backfaceEnabled");
+        DrawField("backfaceThresholdDeg");
+        DrawField("backfaceLerp");
+        DrawField("backfaceColor");
+        DrawField("useSmooth");
+
         serializedObject.ApplyModifiedProperties();
 
         if (EditorGUI.EndChangeCheck())

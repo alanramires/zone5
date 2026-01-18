@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.11 - VFX track e ajustes de manobra
+
+- VFX Track com roll X/Y, scale, backface shading e interpolacao suave
+- VisualRoot separado do root para VFX sem afetar trajetoria/colisao
+- Preview de VFX no editor e runtime com markers por progress/XY
+- Regras de PointList para respeitar ordem e X nao monotônico
+- Curvas VFX aplicadas em 3G/7G (D = +/+, E = -/+)
+
 ## 0.0.10 - 0.0.10 Maneuver system updates
 
 - ManeuverProfile com DB/Manager, resolver com fallback no catalogo legado

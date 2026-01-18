@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 1G12
   m_EditorClassIdentifier: Assembly-CSharp::Zone5.ManeuverProfile
   maneuverId: 1G12F
-  displayName: Reta Acelerando
+  displayName: Combat Advance
   aliases:
   - 1G12
   - 1G12F
@@ -28,6 +28,8 @@ MonoBehaviour:
   pathMode: 0
   distanceFU: 2
   turnAngleDeg: 0
+  curveBias: 1
+  useLegacyArc: 0
   straightLeadInFrac: 0
   bezierForwardHandleFrac: 0.35
   bezierLateralFrac: 0.65

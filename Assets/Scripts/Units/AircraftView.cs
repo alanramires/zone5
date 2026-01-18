@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Zone5
@@ -20,6 +21,15 @@ namespace Zone5
         private float[] _segmentLengths;
         private float[] _cumulativeLengths;
         private float _totalLength;
+        private ManeuverProfile _vfxProfile;
+        private List<float> _vfxKeyCursors;
+        private int _vfxKeyIndex;
+        private Color _vfxNormalTint = Color.white;
+        private Color _vfxCurrentTint = Color.white;
+        private TurnDir _vfxDir = TurnDir.F;
+        private Vector3 _vfxStart;
+        private Vector3 _vfxForward;
+        private float _vfxFuWorld = 1f;
 
         public void ConfigureTrail(TrailManager trailManager, Color color, AircraftUnit unit)
         {
@@ -34,12 +44,30 @@ namespace Zone5
             _unitSync = unit;
         }
 
+        public void ConfigureVfx(ManeuverProfile profile, TurnDir dir, Vector3 start, Vector3 forward, float fuWorld)
+        {
+            _vfxProfile = profile;
+            _vfxDir = dir;
+            _vfxStart = start;
+            _vfxForward = forward;
+            _vfxFuWorld = fuWorld;
+            _vfxKeyIndex = 0;
+            _vfxKeyCursors = null;
+
+            if (_unitSync != null && _unitSync.visualSprite != null)
+                _vfxNormalTint = _unitSync.visualSprite.color;
+            else
+                _vfxNormalTint = Color.white;
+            _vfxCurrentTint = _vfxNormalTint;
+        }
+
         public void SetPath(Vector3[] pts)
         {
             _path = pts;
             _hasFinalHeading = false;
             _finalHeading = Vector3.zero;
             BuildDistances();
+            BuildVfxKeyCursors();
         }
 
         public void SetFinalHeading(Vector3 heading)
@@ -94,6 +122,7 @@ namespace Zone5
             UpdateTransform(_path[_path.Length - 1], finalDir, 1f);
             UpdateLiveTrail(_path[_path.Length - 1], _path.Length - 2);
             ApplyFinalHeadingIfNeeded();
+            ResetVfxIfNeeded();
             _liveTrail = null;
         }
 
@@ -117,6 +146,50 @@ namespace Zone5
             Vector3 exhaustPos = _unitSync.ExhaustAnchor != null ? _unitSync.ExhaustAnchor.position : _unitSync.transform.position;
             Vector3 delta = pos - exhaustPos;
             _unitSync.transform.position += delta;
+
+            ApplyVfx(t);
+        }
+
+        private void ApplyVfx(float t)
+        {
+            if (_unitSync == null || _vfxProfile == null || !_vfxProfile.useVfx)
+            {
+                ResetVfxIfNeeded();
+                return;
+            }
+
+            float cursor = _totalLength * Mathf.Clamp01(t);
+            ManeuverProfile.VfxPose pose;
+            if (_vfxProfile.vfxMode == VfxMode.ByPathXY && _vfxKeyCursors != null && _vfxKeyCursors.Count == _vfxProfile.vfxXY.Count)
+                pose = _vfxProfile.EvaluateVfxByXY(_vfxKeyIndex, cursor, _vfxKeyCursors, out _vfxKeyIndex);
+            else
+                pose = _vfxProfile.EvaluateVfxByProgress(t);
+
+            Color tint = ResolveBackfaceTint(pose.rollXDeg, pose.rollYDeg);
+            _unitSync.ApplyVisualPose(pose.rollXDeg, pose.rollYDeg, pose.scale, tint);
+        }
+
+        private Color ResolveBackfaceTint(float rollXDeg, float rollYDeg)
+        {
+            if (_vfxProfile == null || !_vfxProfile.backfaceEnabled)
+                return _vfxNormalTint;
+
+            bool back = Mathf.Abs(rollXDeg) > _vfxProfile.backfaceThresholdDeg ||
+                        Mathf.Abs(rollYDeg) > _vfxProfile.backfaceThresholdDeg;
+            Color target = back ? _vfxProfile.backfaceColor : _vfxNormalTint;
+            float lerp = Mathf.Clamp01(_vfxProfile.backfaceLerp);
+            if (lerp <= 0f)
+                _vfxCurrentTint = target;
+            else
+                _vfxCurrentTint = Color.Lerp(_vfxCurrentTint, target, lerp);
+            return _vfxCurrentTint;
+        }
+
+        private void ResetVfxIfNeeded()
+        {
+            if (_unitSync == null) return;
+            _vfxCurrentTint = _vfxNormalTint;
+            _unitSync.ResetVisualPose(_vfxNormalTint);
         }
 
         private void ApplyFinalHeadingIfNeeded()
@@ -281,6 +354,78 @@ namespace Zone5
                     return i;
             }
             return _cumulativeLengths.Length - 1;
+        }
+
+        private void BuildVfxKeyCursors()
+        {
+            if (_vfxProfile == null || !_vfxProfile.useVfx || _vfxProfile.vfxMode != VfxMode.ByPathXY)
+            {
+                _vfxKeyCursors = null;
+                return;
+            }
+            if (_path == null || _path.Length < 2 || _segmentLengths == null || _segmentLengths.Length == 0)
+            {
+                _vfxKeyCursors = null;
+                return;
+            }
+
+            var keys = _vfxProfile.vfxXY;
+            if (keys == null || keys.Count == 0)
+            {
+                _vfxKeyCursors = null;
+                return;
+            }
+
+            _vfxKeyCursors = new List<float>(keys.Count);
+            Vector3 forward = _vfxForward;
+            forward.z = 0f;
+            if (forward.sqrMagnitude < 0.000001f) forward = Vector3.up;
+            forward.Normalize();
+            Vector3 right = new Vector3(-forward.y, forward.x, 0f).normalized;
+            float sign = _vfxDir == TurnDir.D ? -1f : 1f;
+            float distanceWorld = Mathf.Max(0f, _vfxProfile.distanceFU) * Mathf.Max(0.01f, _vfxFuWorld);
+
+            float minCursor = 0f;
+            for (int i = 0; i < keys.Count; i++)
+            {
+                var k = keys[i];
+                Vector3 world = _vfxStart
+                    + forward * (k.x * distanceWorld)
+                    + right * (k.y * distanceWorld * sign);
+                float cursor = FindClosestCursor(world, minCursor);
+                _vfxKeyCursors.Add(cursor);
+                minCursor = cursor;
+            }
+        }
+
+        private float FindClosestCursor(Vector3 target, float minCursor)
+        {
+            float bestSqr = float.MaxValue;
+            float bestCursor = minCursor;
+            int startSeg = FindSegmentIndex(minCursor);
+
+            for (int i = startSeg; i < _path.Length - 1; i++)
+            {
+                Vector3 a = _path[i];
+                Vector3 b = _path[i + 1];
+                Vector3 ab = b - a;
+                ab.z = 0f;
+                float abLenSq = ab.sqrMagnitude;
+                if (abLenSq < 0.000001f) continue;
+
+                float t = Mathf.Clamp01(Vector3.Dot(target - a, ab) / abLenSq);
+                Vector3 proj = a + ab * t;
+                float sqr = (target - proj).sqrMagnitude;
+                if (sqr < bestSqr)
+                {
+                    float prevCum = i == 0 ? 0f : _cumulativeLengths[i - 1];
+                    float segLen = Mathf.Sqrt(abLenSq);
+                    bestSqr = sqr;
+                    bestCursor = prevCum + segLen * t;
+                }
+            }
+
+            return bestCursor;
         }
     }
 }
