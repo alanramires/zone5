@@ -7,6 +7,13 @@ namespace Zone5
     /// </summary>
     public static class GameEnum
     {
+        public static class Defaults
+        {
+            public const int HpInitial = 3;
+            public const int FuelInitial = 40;
+            public const int MissilesInitial = 6;
+            public const int GunInitial = 4;
+        }
         // 11 estados do turno (MVP + base pro avançado)
         public enum TurnState
         {

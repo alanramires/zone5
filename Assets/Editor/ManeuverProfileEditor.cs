@@ -30,6 +30,8 @@ public class ManeuverProfileEditor : Editor
         DrawField("displayName");
         DrawField("aliases", true);
         DrawField("allowedDirs");
+        DrawField("defaultSprite");
+        DrawField("afterburnerSprite");
 
         DrawSection("Classification");
         DrawField("kind");
@@ -53,13 +55,14 @@ public class ManeuverProfileEditor : Editor
         DrawField("bezierForwardHandleFrac", false, "Beizer (y)");
         DrawField("bezierLateralFrac", false, "Beizer (x)");
 
-        DrawSection("Point To Point");
+        DrawSection("Custom Movement");
         DrawField("pointsNorm", true, "Point To Point");
 
-        DrawField("enforceStraightStartEnd");
-        DrawField("endHeadingSameAsStart");
-        DrawField("useEndHeadingOverride");
-        DrawField("endHeadingOverrideDeg");
+        DrawSection("Move Options");
+        DrawField("enforceStraightStartEnd", false, "Enforce Straight Start to End");
+        DrawField("endHeadingSameAsStart", false, "Ending Heading Same as Start");
+        DrawField("useEndHeadingOverride", false, "Use Custom Heading");
+        DrawField("endHeadingOverrideDeg", false, "Custom Heading Angle");
 
         DrawSection("Preview");
         DrawField("previewColor");
@@ -70,11 +73,16 @@ public class ManeuverProfileEditor : Editor
         DrawField("vfxMode");
         DrawField("vfxProgress", true);
         DrawField("vfxXY", true);
+
+        DrawSection("VFX Options");
         DrawField("backfaceEnabled");
         DrawField("backfaceThresholdDeg");
         DrawField("backfaceLerp");
         DrawField("backfaceColor");
         DrawField("useSmooth");
+        DrawField("trailDeformEnabled");
+        DrawField("trailDeformMinScale");
+        DrawField("trailDeformMaxRollDeg");
 
         serializedObject.ApplyModifiedProperties();
 

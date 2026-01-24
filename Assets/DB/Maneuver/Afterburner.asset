@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 942823932710bf24295b5ad57fc05e6a, type: 3}
+  m_Name: Afterburner
+  m_EditorClassIdentifier: Assembly-CSharp::Zone5.ManeuverProfile
+  maneuverId: AFTERBURNER
+  displayName: Afterburner
+  aliases:
+  - AFTERBURNER
+  allowedDirs: 1
+  kind: 0
+  mainDir: 1
+  usage: 0
+  usedInAfterBurner: 0
+  gForce: 1
+  machTier: 18
+  evasionPenalty: 2
+  pathMode: 0
+  distanceFU: 3
+  turnAngleDeg: 0
+  curveBias: 1
+  useLegacyArc: 0
+  straightLeadInFrac: 0
+  bezierForwardHandleFrac: 0
+  bezierLateralFrac: 0
+  pointsNorm: []
+  enforceStraightStartEnd: 1
+  endHeadingSameAsStart: 1
+  useEndHeadingOverride: 0
+  endHeadingOverrideDeg: 0
+  previewColor: {r: 1, g: 0, b: 0, a: 1}
+  previewSamples: 24
+  useVfx: 0
+  vfxMode: 0
+  vfxProgress: []
+  vfxXY: []
+  backfaceEnabled: 1
+  backfaceThresholdDeg: 90
+  backfaceLerp: 0.2
+  backfaceColor: {r: 0, g: 0, b: 0, a: 1}
+  useSmooth: 1
+  trailDeformEnabled: 0
+  trailDeformMinScale: 0.35
+  trailDeformMaxRollDeg: 90
+  trailDeformMaxScale: 3

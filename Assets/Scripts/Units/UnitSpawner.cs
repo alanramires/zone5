@@ -47,7 +47,7 @@ namespace Zone5
         {
             "Maverick", "Iceman", "Viper", "Goose", "Slider",
             "Woodsman", "Spirit", "Ghost Striker", "Razor", "Foxhound",
-            "Jester", "Sundown", "Hollywood", "Wolfman", "Cougar"
+            "Jester", "Sundown", "Hollywood", "Wolfman", "Cougar", "Merlin"
         };
 
         private void Start()
@@ -157,8 +157,10 @@ namespace Zone5
             {
                 config.unitData = ScriptableObject.CreateInstance<UnitProfile>();
                 config.unitData.unitName = "F-14";
-                config.unitData.maxHp = 5;
-                config.unitData.maxFuel = 20;
+                config.unitData.maxHp = GameEnum.Defaults.HpInitial;
+                config.unitData.maxFuel = GameEnum.Defaults.FuelInitial;
+                config.unitData.missilesMax = GameEnum.Defaults.MissilesInitial;
+                config.unitData.gunAmmoMax = GameEnum.Defaults.GunInitial;
             }
 
             // Formation Logic (Simple Wedge/Line based on user description)
@@ -257,7 +259,7 @@ namespace Zone5
                 unit.maneuverHistory.Add(new AircraftUnit.FlightLog 
                 { 
                     TurnIndex = 0, 
-                    ManeuverCode = "1G18", 
+                    ManeuverCode = "1G12", 
                     RawInput = "SPAWN", 
                     GForce = 1, 
                     Speed = 1.0f 

@@ -58,6 +58,7 @@ namespace Zone5
             [FormerlySerializedAs("rollDeg")]
             public float rollYDeg;
             public Vector2 scale;
+            public bool affectTrailDeform;
         }
 
         [Serializable]
@@ -70,6 +71,7 @@ namespace Zone5
             [FormerlySerializedAs("rollDeg")]
             public float rollYDeg;
             public Vector2 scale;
+            public bool affectTrailDeform;
         }
 
         public struct VfxPose
@@ -77,6 +79,7 @@ namespace Zone5
             public float rollXDeg;
             public float rollYDeg;
             public Vector2 scale;
+            public bool affectTrailDeform;
         }
 
         [Header("Identity")]
@@ -84,6 +87,8 @@ namespace Zone5
         public string displayName;
         public string[] aliases;
         public AllowedDirs allowedDirs = AllowedDirs.Forward | AllowedDirs.Left | AllowedDirs.Right;
+        public Sprite defaultSprite;
+        public Sprite afterburnerSprite;
 
         [Header("Classification")]
         public ManeuverKind kind = ManeuverKind.Move;
@@ -132,6 +137,10 @@ namespace Zone5
         public float backfaceLerp = 0.2f;
         public Color backfaceColor = Color.black;
         public bool useSmooth = true;
+        public bool trailDeformEnabled = false;
+        public float trailDeformMinScale = 0.35f;
+        public float trailDeformMaxRollDeg = 90f;
+        public float trailDeformMaxScale = 3f;
 
         private static readonly HashSet<string> Warned = new();
 
@@ -327,7 +336,7 @@ namespace Zone5
         public VfxPose EvaluateVfxByProgress(float p01)
         {
             if (vfxProgress == null || vfxProgress.Count == 0)
-                return new VfxPose { rollXDeg = 0f, rollYDeg = 0f, scale = Vector2.one };
+                return new VfxPose { rollXDeg = 0f, rollYDeg = 0f, scale = Vector2.one, affectTrailDeform = false };
 
             List<VfxKeyProgress> keys = vfxProgress;
             bool sorted = true;
@@ -348,11 +357,11 @@ namespace Zone5
 
             float p = Mathf.Clamp01(p01);
             if (p <= keys[0].p)
-                return MakePose(keys[0].rollXDeg, keys[0].rollYDeg, keys[0].scale);
+                return MakePose(keys[0].rollXDeg, keys[0].rollYDeg, keys[0].scale, keys[0].affectTrailDeform);
             if (p >= keys[keys.Count - 1].p)
             {
                 var last = keys[keys.Count - 1];
-                return MakePose(last.rollXDeg, last.rollYDeg, last.scale);
+                return MakePose(last.rollXDeg, last.rollYDeg, last.scale, last.affectTrailDeform);
             }
 
             VfxKeyProgress k0 = keys[0];
@@ -374,7 +383,8 @@ namespace Zone5
             {
                 rollXDeg = Mathf.Lerp(k0.rollXDeg, k1.rollXDeg, t),
                 rollYDeg = Mathf.Lerp(k0.rollYDeg, k1.rollYDeg, t),
-                scale = Vector2.Lerp(NormalizeScale(k0.scale), NormalizeScale(k1.scale), t)
+                scale = Vector2.Lerp(NormalizeScale(k0.scale), NormalizeScale(k1.scale), t),
+                affectTrailDeform = k0.affectTrailDeform
             };
         }
 
@@ -382,7 +392,7 @@ namespace Zone5
         {
             advancedKeyIndex = currentKeyIndex;
             if (vfxXY == null || vfxXY.Count == 0 || keyCursors == null || keyCursors.Count != vfxXY.Count)
-                return new VfxPose { rollXDeg = 0f, rollYDeg = 0f, scale = Vector2.one };
+                return new VfxPose { rollXDeg = 0f, rollYDeg = 0f, scale = Vector2.one, affectTrailDeform = false };
 
             int lastIndex = vfxXY.Count - 1;
             if (currentKeyIndex < 0) currentKeyIndex = 0;
@@ -395,7 +405,7 @@ namespace Zone5
             if (advancedKeyIndex == nextIndex)
             {
                 var key = vfxXY[advancedKeyIndex];
-                return MakePose(key.rollXDeg, key.rollYDeg, key.scale);
+                return MakePose(key.rollXDeg, key.rollYDeg, key.scale, key.affectTrailDeform);
             }
 
             float a = keyCursors[advancedKeyIndex];
@@ -410,8 +420,29 @@ namespace Zone5
             {
                 rollXDeg = Mathf.Lerp(k0.rollXDeg, k1.rollXDeg, t),
                 rollYDeg = Mathf.Lerp(k0.rollYDeg, k1.rollYDeg, t),
-                scale = Vector2.Lerp(NormalizeScale(k0.scale), NormalizeScale(k1.scale), t)
+                scale = Vector2.Lerp(NormalizeScale(k0.scale), NormalizeScale(k1.scale), t),
+                affectTrailDeform = k0.affectTrailDeform
             };
+        }
+        public bool HasTrailDeformKeys()
+        {
+            if (vfxProgress != null)
+            {
+                for (int i = 0; i < vfxProgress.Count; i++)
+                {
+                    if (vfxProgress[i].affectTrailDeform)
+                        return true;
+                }
+            }
+            if (vfxXY != null)
+            {
+                for (int i = 0; i < vfxXY.Count; i++)
+                {
+                    if (vfxXY[i].affectTrailDeform)
+                        return true;
+                }
+            }
+            return false;
         }
 
         public Vector3 ResolveEndHeading(Vector3 forwardWorld, TurnDir dir, List<Vector3> pathWorld)
@@ -497,7 +528,7 @@ namespace Zone5
                 for (int s = 1; s <= samplesPerSegment; s++)
                 {
                     float t = s / (float)samplesPerSegment;
-                    result.Add(CatmullRom(p0, p1, p2, p3, t));
+                    result.Add(CentripetalCatmullRom(p0, p1, p2, p3, t));
                 }
             }
 
@@ -515,6 +546,26 @@ namespace Zone5
                 (2f * p0 - 5f * p1 + 4f * p2 - p3) * t2 +
                 (-p0 + 3f * p1 - 3f * p2 + p3) * t3
             );
+        }
+
+        private static Vector3 CentripetalCatmullRom(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
+        {
+            const float alpha = 0.5f;
+            float t0 = 0f;
+            float t1 = t0 + Mathf.Pow(Vector3.Distance(p0, p1), alpha);
+            float t2 = t1 + Mathf.Pow(Vector3.Distance(p1, p2), alpha);
+            float t3 = t2 + Mathf.Pow(Vector3.Distance(p2, p3), alpha);
+
+            float tScaled = Mathf.Lerp(t1, t2, Mathf.Clamp01(t));
+
+            Vector3 A1 = Vector3.Lerp(p0, p1, (t1 - t0) <= 0.0001f ? 0f : (tScaled - t0) / (t1 - t0));
+            Vector3 A2 = Vector3.Lerp(p1, p2, (t2 - t1) <= 0.0001f ? 0f : (tScaled - t1) / (t2 - t1));
+            Vector3 A3 = Vector3.Lerp(p2, p3, (t3 - t2) <= 0.0001f ? 0f : (tScaled - t2) / (t3 - t2));
+
+            Vector3 B1 = Vector3.Lerp(A1, A2, (t2 - t0) <= 0.0001f ? 0f : (tScaled - t0) / (t2 - t0));
+            Vector3 B2 = Vector3.Lerp(A2, A3, (t3 - t1) <= 0.0001f ? 0f : (tScaled - t1) / (t3 - t1));
+
+            return Vector3.Lerp(B1, B2, (t2 - t1) <= 0.0001f ? 0f : (tScaled - t1) / (t2 - t1));
         }
 
         private static float ApplyBias(float t, float bias)
@@ -535,13 +586,14 @@ namespace Zone5
             return scale == Vector2.zero ? Vector2.one : scale;
         }
 
-        private static VfxPose MakePose(float rollXDeg, float rollYDeg, Vector2 scale)
+        private static VfxPose MakePose(float rollXDeg, float rollYDeg, Vector2 scale, bool affectTrailDeform)
         {
             return new VfxPose
             {
                 rollXDeg = rollXDeg,
                 rollYDeg = rollYDeg,
-                scale = NormalizeScale(scale)
+                scale = NormalizeScale(scale),
+                affectTrailDeform = affectTrailDeform
             };
         }
 

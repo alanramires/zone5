@@ -1,6 +1,6 @@
 no MVP (batalha em 2 times) o plano é o seguinte:
 
-0. Cada time começa em um lado do tabuleiro segundo o unitSpawner em uma manobra reta fixa 1G18 em formação linha com um aviao ao lado do outro (no pós MVP cada jogador escolhe uma carta reta de velocidade varivel e o lider decide a formação)
+0. Cada time começa em um lado do tabuleiro segundo o unitSpawner em uma manobra reta fixa 1G12 em formação linha com um aviao ao lado do outro (no pós MVP cada jogador escolhe uma carta reta de velocidade varivel e o lider decide a formação)
 
 1. Cada jogador escolhe 1 manobra (afterburner que seria 2 manobras jogadas juntas fica pro pós MVP)
 

@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 86cf061690a6a94418e57a1b5b62709d
+guid: 71222c16a1907f244b9f2c8427f3ca9a
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -8668582537758553522
-    second: 5GE_0
+      213: 4354650415576038369
+    second: 5GE(1)_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -113,7 +113,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: 5GE_0
+      name: 5GE(1)_0
       rect:
         serializedVersion: 2
         x: 0
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e4a4fba2c1203b780800000000000000
-      internalID: -8668582537758553522
+      spriteID: 1ebba652b73de6c30800000000000000
+      internalID: 4354650415576038369
       vertices: []
       indices: 
       edges: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      5GE_0: -8668582537758553522
+      5GE(1)_0: 4354650415576038369
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

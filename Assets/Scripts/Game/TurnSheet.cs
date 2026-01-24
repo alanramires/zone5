@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Zone5
 {
@@ -20,6 +21,8 @@ namespace Zone5
             // Persistent Info (for UI when unit is dead)
             public string callSign;
             public string aircraftName;
+            public string unitId;
+            public Sprite aircraftSprite;
             public int cachedHp;  // Last known HP
 
             public string maneuverRaw;

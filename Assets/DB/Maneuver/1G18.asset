@@ -31,8 +31,8 @@ MonoBehaviour:
   curveBias: 1
   useLegacyArc: 0
   straightLeadInFrac: 0
-  bezierForwardHandleFrac: 0.35
-  bezierLateralFrac: 0.65
+  bezierForwardHandleFrac: 0
+  bezierLateralFrac: 0
   pointsNorm: []
   enforceStraightStartEnd: 1
   endHeadingSameAsStart: 1
@@ -40,3 +40,16 @@ MonoBehaviour:
   endHeadingOverrideDeg: 0
   previewColor: {r: 1, g: 0, b: 0, a: 1}
   previewSamples: 24
+  useVfx: 0
+  vfxMode: 0
+  vfxProgress: []
+  vfxXY: []
+  backfaceEnabled: 1
+  backfaceThresholdDeg: 90
+  backfaceLerp: 0.2
+  backfaceColor: {r: 0, g: 0, b: 0, a: 1}
+  useSmooth: 1
+  trailDeformEnabled: 0
+  trailDeformMinScale: 0.35
+  trailDeformMaxRollDeg: 90
+  trailDeformMaxScale: 3

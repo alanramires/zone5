@@ -22,7 +22,7 @@ Cada jogador então empurra seu caça para frente a partir do vértice inicial, 
 
 — *“Todo mundo escolhe uma carta reta inicial,”* orienta Alan.
 
-Quase todos escolhem **1G18**, uma carta rápida que avança agressivamente em direção ao centro.
+Quase todos escolhem **1G12**, uma carta rápida que avança agressivamente em direção ao centro.
 Exceto Douglas, que escolhe **1G09**.
 
 — *“Cauteloso, Bossman?”* provocam Liz e Mayane, rindo.
@@ -44,7 +44,7 @@ Alan escolhe uma carta reta e cobre com a mão.
 Rafael escolhe **duas cartas 3G** na velocidade máxima, curvando em direção às garotas, e cobre as cartas de um jeito que parece ter escolhido apenas uma.
 
 Mayane pega uma carta rápida para frente.
-Liz pega duas: uma **3G lenta**, virando até Mayane, e depois uma carta rápida na direção da amiga — um afterburner com sliding.
+Liz pega duas: uma **3G lenta**, virando ate Mayane, e depois uma carta rapida na direcao da amiga.
 
 Douglas, fiel ao seu estilo, escolhe uma **acrobacia 0G (air brake)**. Ele praticamente não sai do vértice inicial. Quer ver o que os outros vão fazer.
 
@@ -57,17 +57,7 @@ Três jogadores confirmam. Douglas ainda hesita.
 Depois de alguns segundos, Douglas cobre sua carta.
 — *“Pronto.”*
 
-— *“Agora, declarem armamentos,”* diz Alan.
-
-— *“Nada.”* — Alan.
-— *“Nada.”* — Mayane.
-— *“Nada.”* — Liz.
-— *Metralhadora.”* — Douglas.
-— *“Míssil.”* — Rafael.
-
-— *“Já na primeira rodada?”* comenta Alan, surpreso.
-— "Esse Bossman não é brincadeira, não é?" — Rafael. — "Usando metranca pra medir o campo, muito experto!"
-
+"Armamentos ficam fora no MVP", diz Alan. "Hoje o foco e leitura de manobra e posicionamento."
 
 ---
 
@@ -77,7 +67,7 @@ Depois de alguns segundos, Douglas cobre sua carta.
 
 Cinco mãos se levantam ao mesmo tempo.
 
-Os jogadores encaixam os rastros das manobras às cartas iniciais, formando os caminhos completos. Quem escolheu afterburner encaixa as duas cartas. Qualquer uma das posições finais pode ser alvo.
+Os jogadores encaixam os rastros das manobras às cartas iniciais, formando os caminhos completos. Qualquer uma das posições finais pode ser alvo.
 
 Rafael avança agressivamente na direção de Mayane.
 Liz vira para ela e acelera.
@@ -95,24 +85,11 @@ Douglas continua afastado, praticamente imóvel, analisando.
 
 ---
 
-### O ataque
-
-Alan anuncia:
-— *“Ok, Rafael Marks. Só você declarou míssil. Escolha um, encaixe na trajetória final e veja se atinge.”*
-
-Rafael escolhe **sem medir**.
-Puxa um míssil com leve desvio à esquerda e o posiciona.
-
-O míssil cruza o tapete inteiro e explode no limite do alcance — muito perto de Mayane.
-
-— *“Sortuda,”* provoca Rafael.
-
-Mayane responde na hora:
-— *“Eu vi que você estava no meu vértice vizinho. Se eu tivesse virado pra você, estaria na mira.”*
+### Leitura de campo
 
 Douglas finalmente fala:
-— *“Enquanto isso vocês brigam, eu tô vendo alianças se formando… o Spitfire vindo pro centro… o Rafael peitando sozinho as garotas. Isso vai dar ruim.”*
-Douglas posiciona seu missil pela metade pra emular uma metralhadora e ve "hmm, estou a 2 clicks de Mayane, se eu usar afterburner eu a alcanço, mas não posso passar por Rafael"
+"Enquanto isso voces brigam, eu to vendo aliancas se formando, o Spitfire vindo pro centro, o Rafael peitando sozinho as garotas. Isso vai dar ruim."
+Douglas mede mentalmente duas opcoes de manobra e conclui que precisa manter espaco sem se expor.
 
 ---
 

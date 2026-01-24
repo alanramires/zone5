@@ -16,8 +16,9 @@ MonoBehaviour:
   unitId: F-14
   spriteDefault: {fileID: 21300000, guid: 218c014173e3d204f93bb594c5fd7a95, type: 3}
   maxHp: 3
-  maxFuel: 56
+  maxFuel: 40
   missilesMax: 6
+  gunAmmoMax: 4
   vulcanUnlimited: 1
   tokenLengthFU: 1
   colliderSize: {x: 1.8, y: 1.8}

@@ -13,11 +13,12 @@ namespace Zone5
         public Sprite spriteDefault;
 
         [Header("Stats (Advanced-ready)")]
-        [Min(1)] public int maxHp = 3;
-        [Min(0)] public int maxFuel = 56;
+        [Min(1)] public int maxHp = GameEnum.Defaults.HpInitial;
+        [Min(0)] public int maxFuel = GameEnum.Defaults.FuelInitial;
 
         [Header("Weapons")]
-        [Min(0)] public int missilesMax = 6;
+        [Min(0)] public int missilesMax = GameEnum.Defaults.MissilesInitial;
+        [Min(0)] public int gunAmmoMax = GameEnum.Defaults.GunInitial;
         public bool vulcanUnlimited = true;
 
         [Header("Scale (optional)")]

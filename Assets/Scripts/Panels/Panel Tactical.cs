@@ -7,10 +7,6 @@ using Zone5;
 
 public class Panel_tactical : MonoBehaviour
 {
-    [Header("Info")]
-    [SerializeField] private TMP_Text txtTurn;  // "Turno: X"
-    [SerializeField] private TMP_Text txtPhase; // "Fase: Y"
-
     [Header("Players List")]
     [SerializeField] private Transform playersListRoot;   // Panel_Tactical/PlayersBox/PlayersList
     [SerializeField] private PilotRowView pilotRowPrefab; // Prefab do item repetivel (PilotRow)
@@ -43,7 +39,6 @@ public class Panel_tactical : MonoBehaviour
 
     private void Start()
     {
-        RefreshInfo();
         RefreshFromTurnManager();
     }
 
@@ -52,27 +47,6 @@ public class Panel_tactical : MonoBehaviour
     // Advance removed
 
     // ===== Internals =====
-
-    private void RefreshInfo()
-    {
-        int t = 1;
-        string p = "Unknown";
-
-        if (turnManager != null && turnManager.sheet != null)
-        {
-            t = turnManager.sheet.turnIndex;
-            p = GetPhaseLabel(turnManager.sheet.phase);
-            if (turnManager.sheet.phase == GameEnum.TurnState.MatchEnded)
-            {
-                p = turnManager.winnerTeam >= 0
-                    ? $"Team {turnManager.winnerTeam} wins"
-                    : "Draw";
-            }
-        }
-
-        if (txtTurn != null) txtTurn.text = $"Turno: {t}";
-        if (txtPhase != null) txtPhase.text = $"{p}";
-    }
 
     private void BindTurnManager()
     {
@@ -107,19 +81,16 @@ public class Panel_tactical : MonoBehaviour
 
     private void HandleTurnStateChanged()
     {
-        RefreshInfo();
         RefreshFromTurnManager();
     }
 
     private void HandleSheetChanged()
     {
-        RefreshInfo();
         RefreshFromTurnManager();
     }
 
     private void HandleGlobalTurnStateChanged(GameEnum.TurnState state)
     {
-        RefreshInfo();
         RefreshFromTurnManager();
     }
 
@@ -156,26 +127,29 @@ public class Panel_tactical : MonoBehaviour
             // Get unit info - Try Map first (live), then fallback to Persistent
             string callsign = "Unknown";
             string aircraftName = "Unknown";
-            int hp = 0;
+            string unitProfileId = null;
+            Sprite aircraftSprite = null;
             
             if (unitMap.TryGetValue(pRow.playerId, out var unit))
             {
                 callsign = !string.IsNullOrEmpty(unit.callSign) ? unit.callSign : unit.unitId;
-                aircraftName = unit.UnitData != null ? unit.UnitData.unitName : "Fighter";
-                hp = unit.currentHp;
+                aircraftName = unit.UnitData != null ? unit.UnitData.unitId : "Fighter";
+                unitProfileId = aircraftName;
+                aircraftSprite = unit.UnitData != null ? unit.UnitData.spriteDefault : null;
                 
                 // Update persistent data just in case
                 pRow.callSign = callsign;
                 pRow.aircraftName = aircraftName;
-                pRow.cachedHp = hp;
+                pRow.unitId = unitProfileId;
+                pRow.aircraftSprite = aircraftSprite;
             }
             else
             {
                 // Unit destroyed? Use persistent data
                 callsign = !string.IsNullOrEmpty(pRow.callSign) ? pRow.callSign : $"P{pRow.playerId}";
                 aircraftName = !string.IsNullOrEmpty(pRow.aircraftName) ? pRow.aircraftName : "Fighter";
-                hp = pRow.cachedHp; // Likely 0 or last known
-                if (!pRow.isAlive) hp = 0;
+                unitProfileId = !string.IsNullOrEmpty(pRow.unitId) ? pRow.unitId : aircraftName;
+                aircraftSprite = pRow.aircraftSprite;
             }
 
             string status = GetPilotStatus(pRow, state);
@@ -184,13 +158,10 @@ public class Panel_tactical : MonoBehaviour
             if (pilotRowPrefab != null)
             {
                 var ui = Instantiate(pilotRowPrefab, playersListRoot);
-                // "1: Maverick (F-14) HP: 3 [Pronto]"
-                ui.Setup(pRow.playerId.ToString(), callsign, aircraftName, hp, status);
+                ui.Setup(pRow.playerId.ToString(), callsign, unitProfileId, status, aircraftSprite);
                 
-                if (!pRow.isAlive)
-                    ui.SetColor(new Color(0.4f, 0.4f, 0.4f)); // Dark Gray
-                else
-                    ui.SetColor(Color.white);
+                Color teamColor = GameEnum.GameColors.GetColorForTeam(unit != null ? unit.teamId : 0);
+                ui.SetColors(teamColor, !pRow.isAlive);
 
                 rows.Add(ui);
             }
@@ -208,29 +179,29 @@ public class Panel_tactical : MonoBehaviour
 
     private static string GetPilotStatus(TurnSheet.PlayerRow row, GameEnum.TurnState state)
     {
-        if (row == null) return "Wait";
-        if (!row.isAlive) return "Abatido";
+        if (row == null) return "Aguardando";
+        if (!row.isAlive) return "Eliminado";
 
         switch (state)
         {
             case GameEnum.TurnState.SelectManeuver:
             case GameEnum.TurnState.WaitManeuverConfirm:
-                return row.maneuverReady ? "Pronto" : "Selecionando...";
+                return row.maneuverReady ? "Pronto" : "Aguardando";
             
             case GameEnum.TurnState.DeclareWeapon:
             case GameEnum.TurnState.WaitWeaponDeclare:
-                return row.weaponReady ? "Pronto" : "Selecionando...";
+                return row.weaponReady ? "Pronto" : "Aguardando";
 
             case GameEnum.TurnState.SelectMissileProfile:
             case GameEnum.TurnState.WaitMissileSelection:
                 // Only relevant if they declared a missile
                 if (MvpRules.SanitizeWeapon(row.weaponCode) == "M")
-                    return row.missileReady ? "Pronto" : "Selecionando...";
+                    return row.missileReady ? "Pronto" : "Aguardando";
                 else
-                    return "---"; // No missile declared
+                    return "Aguardando";
 
             default:
-                return "---";
+                return "Travado";
         }
     }
 

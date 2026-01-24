@@ -16,8 +16,9 @@ MonoBehaviour:
   unitId: Mig-29
   spriteDefault: {fileID: 21300000, guid: 9991059c209e5e846b25eff77c0a9afa, type: 3}
   maxHp: 3
-  maxFuel: 56
+  maxFuel: 40
   missilesMax: 6
+  gunAmmoMax: 4
   vulcanUnlimited: 1
   tokenLengthFU: 1
   colliderSize: {x: 1.8, y: 1.8}

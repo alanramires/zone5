@@ -17,6 +17,7 @@ namespace Zone5
         public int currentHp;
         public int currentFuel;
         public int currentMissiles;
+        public int currentGunAmmo;
         [System.Serializable]
         public struct FlightLog
         {
@@ -83,9 +84,10 @@ namespace Zone5
                 box.offset = data.colliderOffset;
             }
 
-            currentHp = MvpRules.IsMvp ? 1 : data.maxHp;
+            currentHp = Mathf.Max(1, data.maxHp);
             currentFuel = data.maxFuel;
             currentMissiles = data.missilesMax;
+            currentGunAmmo = data.gunAmmoMax;
 
             if (string.IsNullOrEmpty(unitId))
             {
