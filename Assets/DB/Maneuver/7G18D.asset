@@ -12,12 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 942823932710bf24295b5ad57fc05e6a, type: 3}
   m_Name: 7G18D
   m_EditorClassIdentifier: Assembly-CSharp::Zone5.ManeuverProfile
-  maneuverId: 7G18D
+  maneuverId: 7GD18
   displayName: Extreme-G Turn Right
   aliases:
   - 7G18D
   - 7GD
   allowedDirs: 4
+  defaultSprite: {fileID: 21300000, guid: c7dfac1f76f43db46b261881a6c0c7db, type: 3}
+  afterburnerSprite: {fileID: 0}
   kind: 0
   mainDir: 2
   usage: 0
@@ -47,29 +49,39 @@ MonoBehaviour:
     rollXDeg: 0
     rollYDeg: 0
     scale: {x: 0, y: 0}
+    affectTrailDeform: 0
   - p: 0.2
     rollXDeg: 12
     rollYDeg: 20
     scale: {x: 0, y: 0}
+    affectTrailDeform: 0
   - p: 0.45
     rollXDeg: 30
     rollYDeg: 40
     scale: {x: 0, y: 0}
+    affectTrailDeform: 0
   - p: 0.75
     rollXDeg: 30
     rollYDeg: 40
     scale: {x: 0, y: 0}
+    affectTrailDeform: 0
   - p: 0.95
     rollXDeg: 10
     rollYDeg: 15
     scale: {x: 0, y: 0}
+    affectTrailDeform: 0
   - p: 1
     rollXDeg: 0
     rollYDeg: 0
     scale: {x: 0, y: 0}
+    affectTrailDeform: 0
   vfxXY: []
   backfaceEnabled: 1
   backfaceThresholdDeg: 90
   backfaceLerp: 0.2
   backfaceColor: {r: 0, g: 0, b: 0, a: 1}
   useSmooth: 1
+  trailDeformEnabled: 0
+  trailDeformMinScale: 0.35
+  trailDeformMaxRollDeg: 90
+  trailDeformMaxScale: 3

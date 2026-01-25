@@ -9,6 +9,8 @@ namespace Zone5
 {
     public class UnitSpawner : MonoBehaviour
     {
+        public event Action OnSpawnCompleted;
+
         [Serializable]
         public class TeamConfig
         {
@@ -78,6 +80,7 @@ namespace Zone5
             }
             
             // Panel updates itself via events now
+            OnSpawnCompleted?.Invoke();
         }
 
         private void SetupMvpDefaults()

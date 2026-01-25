@@ -26,6 +26,7 @@ namespace Zone5
             public int cachedHp;  // Last known HP
 
             public string maneuverRaw;
+            public string maneuverComboRaw;
             public bool maneuverReady;
 
             public string weaponCode;
@@ -138,6 +139,7 @@ namespace Zone5
                 var r = rows[i];
                 if (r == null) continue;
                 r.maneuverRaw = null;
+                r.maneuverComboRaw = null;
                 r.maneuverReady = false;
                 r.weaponCode = null;
                 r.weaponReady = false;

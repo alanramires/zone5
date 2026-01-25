@@ -63,6 +63,33 @@ namespace Zone5
             if (row == null) return;
 
             row.maneuverRaw = MvpRules.SanitizeManeuver(raw);
+            row.maneuverComboRaw = row.maneuverRaw;
+            row.maneuverReady = !string.IsNullOrWhiteSpace(row.maneuverRaw);
+            turnManager.NotifySheetChanged();
+            turnManager.TryAdvance();
+        }
+
+        public void SubmitManeuverList(int playerId, List<string> codes)
+        {
+            if (turnManager == null) return;
+            if (codes == null || codes.Count == 0) return;
+            var row = turnManager.GetOrCreatePlayerRow(playerId);
+            if (row == null) return;
+
+            string first = "";
+            for (int i = 0; i < codes.Count; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(codes[i]))
+                {
+                    first = codes[i].Trim().ToUpperInvariant();
+                    break;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(first)) return;
+
+            row.maneuverRaw = MvpRules.SanitizeManeuver(first);
+            row.maneuverComboRaw = string.Join("+", codes);
             row.maneuverReady = !string.IsNullOrWhiteSpace(row.maneuverRaw);
             turnManager.NotifySheetChanged();
             turnManager.TryAdvance();

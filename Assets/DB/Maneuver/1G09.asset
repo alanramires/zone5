@@ -12,13 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 942823932710bf24295b5ad57fc05e6a, type: 3}
   m_Name: 1G09
   m_EditorClassIdentifier: Assembly-CSharp::Zone5.ManeuverProfile
-  maneuverId: 1G09F
+  maneuverId: 1G09
   displayName: Cruise Advance
   aliases:
-  - 1G
-  - 1G09
   - 1G09F
+  - 1G09
   allowedDirs: 1
+  defaultSprite: {fileID: 21300000, guid: 1959f9ecaf355404db57a4e016b45f2a, type: 3}
+  afterburnerSprite: {fileID: 21300000, guid: 41bf3fa9413c895478aaa69fc0dbada0, type: 3}
   kind: 0
   mainDir: 1
   usage: 0

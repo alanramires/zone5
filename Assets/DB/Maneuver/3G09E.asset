@@ -12,11 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 942823932710bf24295b5ad57fc05e6a, type: 3}
   m_Name: 3G09E
   m_EditorClassIdentifier: Assembly-CSharp::Zone5.ManeuverProfile
-  maneuverId: 3G09E
+  maneuverId: 3GE09
   displayName: Gentle Turn Left
   aliases:
   - 3G09E
   allowedDirs: 2
+  defaultSprite: {fileID: 21300000, guid: 8a8f0e65bd131ae4d8cffa824fa99f3a, type: 3}
+  afterburnerSprite: {fileID: 21300000, guid: 826dd4a7e5659464491592eee1cf5e15, type: 3}
   kind: 0
   mainDir: 3
   usage: 0
@@ -46,29 +48,39 @@ MonoBehaviour:
     rollXDeg: 0
     rollYDeg: 0
     scale: {x: 0, y: 0}
+    affectTrailDeform: 0
   - p: 0.25
     rollXDeg: -1
     rollYDeg: 15
     scale: {x: 0, y: 0}
+    affectTrailDeform: 0
   - p: 0.45
     rollXDeg: -2
     rollYDeg: 35
     scale: {x: 0, y: 0}
+    affectTrailDeform: 0
   - p: 0.7
     rollXDeg: -2
     rollYDeg: 35
     scale: {x: 0, y: 0}
+    affectTrailDeform: 0
   - p: 0.9
     rollXDeg: -8
     rollYDeg: 12
     scale: {x: 0, y: 0}
+    affectTrailDeform: 0
   - p: 1
     rollXDeg: 0
     rollYDeg: 0
     scale: {x: 0, y: 0}
+    affectTrailDeform: 0
   vfxXY: []
   backfaceEnabled: 1
   backfaceThresholdDeg: 90
   backfaceLerp: 0.2
   backfaceColor: {r: 0, g: 0, b: 0, a: 1}
   useSmooth: 1
+  trailDeformEnabled: 0
+  trailDeformMinScale: 0.35
+  trailDeformMaxRollDeg: 90
+  trailDeformMaxScale: 3
