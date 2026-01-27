@@ -39,6 +39,8 @@ namespace Zone5
         public int CurrentIndex { get; private set; } = -1;
         public string CurrentId { get; private set; } = "";
 
+        public Color NormalTextColor => normalTextColor;
+            
         private readonly List<UnityAction> _handlers = new List<UnityAction>();
 
         private void OnEnable()
@@ -81,6 +83,7 @@ namespace Zone5
 
         public void ClearSelection()
         {
+            Debug.Log($"[ButtonSelectionGroup] ClearSelection on {gameObject.name} (Count={options.Count})");
             for (int i = 0; i < options.Count; i++)
                 ApplyVisual(options[i], false);
             CurrentIndex = -1;

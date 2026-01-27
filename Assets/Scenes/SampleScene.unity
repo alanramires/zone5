@@ -1533,7 +1533,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2022093289}
-  m_Father: {fileID: 174831819}
+  m_Father: {fileID: 1176877044}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
@@ -2172,11 +2172,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 422616002}
-  - {fileID: 491130104}
-  - {fileID: 90153770}
-  - {fileID: 2093223004}
-  - {fileID: 842734364}
+  - {fileID: 1176877044}
   m_Father: {fileID: 1715349911}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
@@ -3591,6 +3587,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 285140487}
+  - component: {fileID: 285140488}
   m_Layer: 5
   m_Name: Row_Normal
   m_TagString: Untagged
@@ -3621,6 +3618,33 @@ RectTransform:
   m_AnchoredPosition: {x: 0.000030517578, y: 0}
   m_SizeDelta: {x: 180, y: 180}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &285140488
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 285140486}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9d16cb54dbcc294994ef58c5e346309, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Zone5.ButtonSelectionGroup
+  options: []
+  defaultIndex: 0
+  defaultId: 
+  selectDefaultOnEnable: 0
+  autoCollectButtons: 1
+  includeInactive: 1
+  buttonNamePrefix: Button_
+  applyGraphicColor: 1
+  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  selectedColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
+  applyTextStyle: 1
+  normalTextColor: {r: 0, g: 0, b: 0, a: 1}
+  selectedTextColor: {r: 1, g: 1, b: 1, a: 1}
+  normalTextStyle: 0
+  selectedTextStyle: 1
 --- !u!1 &288730660
 GameObject:
   m_ObjectHideFlags: 0
@@ -4588,6 +4612,54 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &362514946
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 362514947}
+  - component: {fileID: 362514948}
+  m_Layer: 0
+  m_Name: CockpitController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &362514947
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 362514946}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1975391413}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &362514948
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 362514946}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 862c219d5ecb70d4e8eecd7483101171, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PanelPhaseController
+  turnManager: {fileID: 1193237689}
+  panelManche: {fileID: 2110207317}
+  panelThrottle: {fileID: 1981058938}
+  panelWeapons: {fileID: 409788941}
 --- !u!1 &366663566
 GameObject:
   m_ObjectHideFlags: 0
@@ -4751,7 +4823,6 @@ GameObject:
   - component: {fileID: 409788942}
   - component: {fileID: 409788944}
   - component: {fileID: 409788943}
-  - component: {fileID: 409788945}
   - component: {fileID: 409788946}
   m_Layer: 5
   m_Name: Panel_Weapons
@@ -4820,22 +4891,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 409788941}
   m_CullTransparentMesh: 1
---- !u!114 &409788945
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 409788941}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a811380256c3c7469736b5cdfe3314e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Zone5.PanelWeaponsDefaults
-  buttonMissile: {fileID: 1355821323}
-  buttonGun: {fileID: 191248459}
-  buttonOff: {fileID: 616506900}
-  buttonConfirm: {fileID: 661313699}
 --- !u!114 &409788946
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5326,7 +5381,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 422616001}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -5335,11 +5390,11 @@ RectTransform:
   - {fileID: 434851157}
   - {fileID: 1026427801}
   - {fileID: 213756863}
-  m_Father: {fileID: 174831819}
+  m_Father: {fileID: 1176877044}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -180.00005, y: 0}
   m_SizeDelta: {x: 540, y: 180}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &422616003
@@ -6334,7 +6389,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 491130103}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -6342,11 +6397,11 @@ RectTransform:
   - {fileID: 1319260746}
   - {fileID: 2133022758}
   - {fileID: 1279858532}
-  m_Father: {fileID: 174831819}
+  m_Father: {fileID: 1176877044}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -180.00005, y: 0}
   m_SizeDelta: {x: 540, y: 180}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &505336839
@@ -6497,7 +6552,7 @@ GameObject:
   - component: {fileID: 508984145}
   - component: {fileID: 508984146}
   m_Layer: 0
-  m_Name: GroupController
+  m_Name: CockpitController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6550,6 +6605,7 @@ MonoBehaviour:
   arrowStep0: {fileID: 1854048691}
   arrowStep1: {fileID: 1015134928}
   arrowSingle: {fileID: 213756862}
+  selectionGroup: {fileID: 0}
 --- !u!1 &512011293
 GameObject:
   m_ObjectHideFlags: 0
@@ -10321,7 +10377,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &787198235
 RectTransform:
   m_ObjectHideFlags: 0
@@ -11183,7 +11239,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 989900585}
-  m_Father: {fileID: 174831819}
+  m_Father: {fileID: 1176877044}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
@@ -15183,6 +15239,57 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1141534370}
   m_CullTransparentMesh: 1
+--- !u!1 &1154415002
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1154415003}
+  - component: {fileID: 1154415004}
+  m_Layer: 0
+  m_Name: WeaponsController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1154415003
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1154415002}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1975391413}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1154415004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1154415002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13bddeff00067cf4f9a637ea4a7669d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PanelWeaponsController
+  buttonMissile: {fileID: 1355821323}
+  buttonGun: {fileID: 191248459}
+  buttonOff: {fileID: 616506900}
+  buttonConfirm: {fileID: 661313699}
+  selectionGroup: {fileID: 285140488}
+  turnManager: {fileID: 1193237689}
+  matchController: {fileID: 476382727}
 --- !u!1 &1154685627
 GameObject:
   m_ObjectHideFlags: 0
@@ -15574,6 +15681,46 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1170462211}
   m_CullTransparentMesh: 1
+--- !u!1 &1176877043
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1176877044}
+  m_Layer: 5
+  m_Name: ManeuverSelected
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1176877044
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1176877043}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 422616002}
+  - {fileID: 491130104}
+  - {fileID: 90153770}
+  - {fileID: 2093223004}
+  - {fileID: 842734364}
+  m_Father: {fileID: 174831819}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 180, y: 180}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!1 &1185719744
 GameObject:
   m_ObjectHideFlags: 0
@@ -15780,11 +15927,11 @@ RectTransform:
   - {fileID: 1680196476}
   m_Father: {fileID: 1694132274}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -0.000061035156, y: -42}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: 0.000061035156, y: -4.9999847}
   m_SizeDelta: {x: 300, y: 750}
-  m_Pivot: {x: 0.5, y: 1}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!114 &1189108317
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18817,10 +18964,10 @@ RectTransform:
   m_Children:
   - {fileID: 298060450}
   - {fileID: 762461138}
+  - {fileID: 787198235}
   - {fileID: 1694132274}
   - {fileID: 409908922}
   - {fileID: 952682151}
-  - {fileID: 787198235}
   - {fileID: 1715349911}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -20761,8 +20908,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -0.00012207031, y: 0}
-  m_SizeDelta: {x: 300, y: 800}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 300, y: 0}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!114 &1694132277
 MonoBehaviour:
@@ -21235,7 +21382,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1715349911}
   m_Layer: 5
-  m_Name: Panel_Group
+  m_Name: Panel_Cockpit
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -22180,11 +22327,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1694132274}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 150, y: -18.005}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 300, y: 36.01}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 1, y: 1}
 --- !u!114 &1799357443
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24568,6 +24715,8 @@ Transform:
   - {fileID: 1336950972}
   - {fileID: 1762927806}
   - {fileID: 508984145}
+  - {fileID: 362514947}
+  - {fileID: 1154415003}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1981058938
@@ -24581,6 +24730,7 @@ GameObject:
   - component: {fileID: 1981058939}
   - component: {fileID: 1981058941}
   - component: {fileID: 1981058940}
+  - component: {fileID: 1981058942}
   m_Layer: 5
   m_Name: Panel_Throttle
   m_TagString: Untagged
@@ -24648,6 +24798,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1981058938}
   m_CullTransparentMesh: 1
+--- !u!225 &1981058942
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1981058938}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1986500357
 GameObject:
   m_ObjectHideFlags: 0
@@ -25945,7 +26107,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 947239359}
-  m_Father: {fileID: 174831819}
+  m_Father: {fileID: 1176877044}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
@@ -26195,6 +26357,7 @@ GameObject:
   - component: {fileID: 2110207320}
   - component: {fileID: 2110207319}
   - component: {fileID: 2110207321}
+  - component: {fileID: 2110207322}
   m_Layer: 5
   m_Name: Panel_Manche
   m_TagString: Untagged
@@ -26282,6 +26445,18 @@ MonoBehaviour:
   rowAcrobacia: {fileID: 522680537}
   rowPosComb: {fileID: 1733870804}
   panelMancheController: {fileID: 1336950973}
+--- !u!225 &2110207322
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2110207317}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &2127551981
 GameObject:
   m_ObjectHideFlags: 0
@@ -26316,14 +26491,14 @@ MonoBehaviour:
   - teamName: USA
     teamId: 0
     unitData: {fileID: 11400000, guid: 7803087a427e98648b4016432d4af4d1, type: 2}
-    count: 2
+    count: 1
     basePos: {x: 0, y: 0}
     spawnDirection: {x: 0, y: 0}
     pilotNames: []
   - teamName: Russia
     teamId: 1
     unitData: {fileID: 11400000, guid: 177ba8d4be307a44a8e7a23d69abce97, type: 2}
-    count: 2
+    count: 1
     basePos: {x: 0, y: 0}
     spawnDirection: {x: 0, y: 0}
     pilotNames: []

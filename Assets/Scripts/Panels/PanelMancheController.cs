@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -37,6 +38,7 @@ namespace Zone5
         private string _currentPrefix = "";
         private int _posCombCount;
         private bool _suppressSelectionUpdate;
+        private GameObject _lastSelection;
 
         private void Awake()
         {
@@ -248,7 +250,7 @@ namespace Zone5
 
         private void ClearSelections()
         {
-            _suppressSelectionUpdate = true;
+            // _suppressSelectionUpdate = true; // Was preventing logic updates!
             _currentPrefix = "";
             if (selectionGroups == null) return;
             for (int i = 0; i < selectionGroups.Length; i++)
@@ -258,7 +260,7 @@ namespace Zone5
             }
             if (throttleController != null)
                 throttleController.ClearSelection();
-            _suppressSelectionUpdate = false;
+            // _suppressSelectionUpdate = false; 
         }
 
         private void BindSelectionGroups()
@@ -316,6 +318,10 @@ namespace Zone5
         private void OnManeuverSelectionChanged(string id)
         {
             if (_suppressSelectionUpdate) return;
+            if (EventSystem.current != null)
+                _lastSelection = EventSystem.current.currentSelectedGameObject;
+            if (panelGroup != null && _lastSelection != null)
+                panelGroup.SetLastSelection(_lastSelection);
             if (string.IsNullOrWhiteSpace(id)) return;
             _currentPrefix = id.Trim().ToUpperInvariant();
             UpdatePreparedManeuver();
@@ -324,6 +330,10 @@ namespace Zone5
         private void OnThrottleChanged(string speed)
         {
             if (_suppressSelectionUpdate) return;
+            if (EventSystem.current != null)
+                _lastSelection = EventSystem.current.currentSelectedGameObject;
+            if (panelGroup != null && _lastSelection != null)
+                panelGroup.SetLastSelection(_lastSelection);
             if (string.IsNullOrWhiteSpace(_currentPrefix)) return;
             UpdatePreparedManeuver();
         }
@@ -367,6 +377,8 @@ namespace Zone5
                 profile = ResolveProfile(altId);
             string code = !string.IsNullOrEmpty(altId) ? altId : maneuverId;
             panelGroup.SetPreparedManeuverAtActive(profile, profile != null ? code : null);
+            if (_lastSelection != null)
+                panelGroup.RestoreFocusIfConfirmSelected(_lastSelection);
         }
 
         private void RestoreFirstManeuverSelection()
@@ -414,13 +426,28 @@ namespace Zone5
 
         public void ResetCockpitToDefault()
         {
+            Debug.Log("[PanelManche] ResetCockpitToDefault called");
             _posCombCount = 0;
             _hasMode = false;
             SetMode(Mode.Normal);
+            ClearSelections();
             if (panelGroup != null)
+            {
+                panelGroup.ConfigureManeuverSlots(1);
                 panelGroup.ClearButtonSelections();
-            if (EventSystem.current != null)
-                EventSystem.current.SetSelectedGameObject(null);
+                panelGroup.RequestClearSelectionOnce();
+            }
+            StartCoroutine(SelectNormalAfterReset());
+        }
+
+        private IEnumerator SelectNormalAfterReset()
+        {
+            for (int i = 0; i < 2; i++)
+                yield return null;
+
+            if (EventSystem.current == null || toggleNormal == null) yield break;
+            if (!toggleNormal.gameObject.activeInHierarchy || !toggleNormal.interactable) yield break;
+            EventSystem.current.SetSelectedGameObject(toggleNormal.gameObject);
         }
     }
 }

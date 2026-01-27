@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using TMPro;
@@ -45,13 +46,36 @@ namespace Zone5
         [SerializeField] private GameObject arrowStep0;
         [SerializeField] private GameObject arrowStep1;
         [SerializeField] private GameObject arrowSingle;
+        [Header("Selection Group")]
+        [SerializeField] private ButtonSelectionGroup selectionGroup;
 
         private UnitSpawner _spawner;
+        private bool _clearSelectionOnce;
+        private bool _confirmVisible;
+        private GameObject _lastSelection;
+
+        private void Awake()
+        {
+            if (selectionGroup == null)
+            {
+                selectionGroup = GetComponent<ButtonSelectionGroup>();
+                if (selectionGroup == null)
+                    selectionGroup = GetComponentInChildren<ButtonSelectionGroup>();
+            }
+        }
+
+        // ...
+
+
 
         private void OnEnable()
         {
             BindSpawner();
         }
+
+        // ...
+
+
 
         private void Start()
         {
@@ -137,6 +161,7 @@ namespace Zone5
 
             var list = new List<ManeuverProfile>(preparedManeuvers);
             OnManeuversConfirmed?.Invoke(list);
+            DeselectIfSelected(buttonConfirm);
         }
         public void IncludeManeuver()
         {
@@ -175,11 +200,12 @@ namespace Zone5
 
         public void ClearButtonSelections()
         {
-            if (EventSystem.current != null)
-                EventSystem.current.SetSelectedGameObject(null);
+            _clearSelectionOnce = true;
+            StartCoroutine(ClearSelectionEndOfFrame());
 
             if (buttonConfirm != null)
             {
+                DeselectIfSelected(buttonConfirm);
                 buttonConfirm.interactable = false;
                 buttonConfirm.gameObject.SetActive(false);
             }
@@ -193,6 +219,52 @@ namespace Zone5
                 buttonRemove.interactable = false;
                 buttonRemove.gameObject.SetActive(false);
             }
+            _confirmVisible = false;
+        }
+
+        public void RequestClearSelectionOnce()
+        {
+            _clearSelectionOnce = true;
+            StartCoroutine(ClearSelectionEndOfFrame());
+        }
+
+        private IEnumerator ClearSelectionEndOfFrame()
+        {
+            yield return null;
+            if (!_clearSelectionOnce) yield break;
+            _clearSelectionOnce = false;
+
+            if (EventSystem.current != null)
+                EventSystem.current.SetSelectedGameObject(null);
+
+            DeselectIfSelected(buttonConfirm);
+            DeselectIfSelected(buttonInclude);
+            DeselectIfSelected(buttonRemove);
+        }
+
+        private static void DeselectIfSelected(Button button)
+        {
+            if (button == null || EventSystem.current == null) return;
+            
+            if (EventSystem.current.currentSelectedGameObject == button.gameObject)
+            {
+                Debug.Log($"[PanelGroup] Force deselecting {button.name}");
+                EventSystem.current.SetSelectedGameObject(null);
+            }
+        }
+
+        public void RestoreFocusIfConfirmSelected(GameObject fallback)
+        {
+            if (fallback == null) return;
+            if (buttonConfirm == null || EventSystem.current == null) return;
+            if (EventSystem.current.currentSelectedGameObject == buttonConfirm.gameObject)
+                EventSystem.current.SetSelectedGameObject(fallback);
+        }
+
+        public void SetLastSelection(GameObject selection)
+        {
+            if (selection == null) return;
+            _lastSelection = selection;
         }
 
         private void EnsurePreparedSlots()
@@ -269,6 +341,59 @@ namespace Zone5
 
                 buttonConfirm.gameObject.SetActive(showConfirm);
                 buttonConfirm.interactable = showConfirm;
+                
+                // Check condition BEFORE activating (so we know if we just appeared)
+                bool newlyAppearing = showConfirm && (!_confirmVisible || !buttonConfirm.gameObject.activeSelf);
+
+                // 1. Activate Button First (Let Unity do its OnEnable checks)
+                buttonConfirm.gameObject.SetActive(showConfirm);
+                buttonConfirm.interactable = showConfirm;
+                
+                // 2. Force Clean State if we just appeared
+                if (newlyAppearing)
+                {
+                    // Debug.Log("[PanelGroup] Resetting Confirm Button Visuals...");
+
+                    // Hard Reset Color Property (Unity UI)
+                    if (buttonConfirm.image != null)
+                        buttonConfirm.image.color = buttonConfirm.colors.normalColor;
+
+                    // Reset CanvasRenderer
+                    if (buttonConfirm.targetGraphic != null)
+                        buttonConfirm.targetGraphic.CrossFadeColor(buttonConfirm.colors.normalColor, 0f, true, true);
+                    
+                    // Force State Machine Reset by toggling interactable
+                    buttonConfirm.interactable = false;
+                    buttonConfirm.interactable = true;
+
+                    // Apply Correct Visuals (Text/Group) - DO THIS LAST
+                    if (selectionGroup != null)
+                    {
+                        // Debug.Log($"[PanelGroup] Clearing SelectionGroup. Options Count: {selectionGroup.GetOptionsCount()}");
+                        selectionGroup.ClearSelection();
+                        
+                        // Force check if Confirm is actually being reset by group
+                        // var confirmOption = selectionGroup.GetOptionForButton(buttonConfirm);
+                        // if (confirmOption == null) Debug.LogWarning("[PanelGroup] Confirm button NOT found in SelectionGroup options!");
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[PanelGroup] SelectionGroup missing! Text color might be wrong.");
+                    }
+
+                    // 5. ULTIMATE FALLBACK: Manually fix text if Group failed
+                    var text = buttonConfirm.GetComponentInChildren<TMP_Text>(true);
+                    if (text != null)
+                    {
+                        // Use configured color if possible, otherwise default to black
+                        text.color = selectionGroup != null ? selectionGroup.NormalTextColor : Color.black;
+                        text.fontStyle = FontStyles.Normal;
+                    }
+                }
+                
+                if (showConfirm && !_confirmVisible)
+                    RestoreFocusIfConfirmSelected(_lastSelection);
+                _confirmVisible = showConfirm;
             }
 
             if (EventSystem.current != null)

@@ -1,5 +1,7 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Zone5
 {
@@ -45,10 +47,37 @@ namespace Zone5
             if (codes.Count == 0) return;
 
             matchController.SubmitManeuverList(unit.playerId, codes);
+            
+            if (EventSystem.current != null)
+                EventSystem.current.SetSelectedGameObject(null);
+
+            // Defer reset to coroutine to avoid UI glitches
+            StartCoroutine(ClearSelectionAfterSubmit());
+        }
+
+        private IEnumerator ClearSelectionAfterSubmit()
+        {
+            Debug.Log("[ManeuverSubmitter] Starting Clear Coroutine...");
+            // Give time for the button click to fully process and UI to update
+            yield return null; 
+            
+            Debug.Log("[ManeuverSubmitter] Executing Reset...");
+            // Execute the Reset logic AFTER the frame wait
             if (panelManche != null)
                 panelManche.ResetCockpitToDefault();
             if (panelGroup != null)
                 panelGroup.ClearButtonSelections();
+
+            yield return null;
+            // ...
+
+            if (EventSystem.current == null) yield break;
+            var current = EventSystem.current.currentSelectedGameObject;
+            if (current != null)
+            {
+                ExecuteEvents.Execute(current, new BaseEventData(EventSystem.current), ExecuteEvents.deselectHandler);
+                EventSystem.current.SetSelectedGameObject(null);
+            }
         }
 
         private List<string> BuildCodes(List<ManeuverProfile> maneuvers)
