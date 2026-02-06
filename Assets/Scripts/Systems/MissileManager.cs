@@ -95,6 +95,16 @@ namespace Zone5
             if (string.IsNullOrWhiteSpace(pathRaw))
                 return null;
 
+            // [NEW] Consume ammo
+            if (shooter != null)
+            {
+                if (!shooter.TryConsumeMissile(pathRaw))
+                {
+                    Debug.LogError($"[MissileManager] Shooter {shooter.unitId} has NO ammo for missile '{pathRaw}'. Spawn aborted.");
+                    return null;
+                }
+            }
+
             // aplica profile (se tiver), senão fica só branco mesmo
             MissileProfile profile = defaultProfile;
             int missileDamage = (profile != null) ? profile.missileDamage : 3;

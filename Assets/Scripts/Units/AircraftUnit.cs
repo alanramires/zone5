@@ -16,7 +16,11 @@ namespace Zone5
 
         public int currentHp;
         public int currentFuel;
-        public int currentMissiles;
+        
+        // [MODIFIED] Replaced simple int with computed property for backward compatibility
+        // public int currentMissiles; 
+        public int currentMissiles => GetTotalMissileCount();
+
         public int currentGunAmmo;
         [System.Serializable]
         public struct FlightLog
@@ -30,6 +34,42 @@ namespace Zone5
 
         public List<FlightLog> maneuverHistory = new List<FlightLog>();
         public string LastManeuver => (maneuverHistory != null && maneuverHistory.Count > 0) ? maneuverHistory[maneuverHistory.Count - 1].ManeuverCode : "";
+
+        [System.Serializable]
+        public class MissileSlot
+        {
+            public string missileId;
+            public int count;
+        }
+
+        public List<MissileSlot> loadout = new List<MissileSlot>();
+
+        public int GetTotalMissileCount()
+        {
+            if (loadout == null) return 0;
+            int sum = 0;
+            for (int i = 0; i < loadout.Count; i++) sum += loadout[i].count;
+            return sum;
+        }
+
+        public void SetLoadout(List<MissileSlot> newLoadout)
+        {
+            loadout = newLoadout ?? new List<MissileSlot>();
+        }
+
+        public bool TryConsumeMissile(string missileId)
+        {
+            if (loadout == null) return false;
+            for (int i = 0; i < loadout.Count; i++)
+            {
+                if (loadout[i].missileId == missileId && loadout[i].count > 0)
+                {
+                    loadout[i].count--;
+                    return true;
+                }
+            }
+            return false;
+        }
 
         [Header("Refs")]
         public Transform visualRoot;
@@ -86,7 +126,19 @@ namespace Zone5
 
             currentHp = Mathf.Max(1, data.maxHp);
             currentFuel = data.maxFuel;
-            currentMissiles = data.missilesMax;
+            
+            // [MODIFIED] Initialize loadout with generic count if list is empty (fallback)
+            // But usually this is set via SetLoadout external call.
+            // For safety, if loadout is empty, we might add generic "M10F" based on missilesMax
+            if (loadout == null || loadout.Count == 0)
+            {
+                loadout = new List<MissileSlot>();
+                if (data.missilesMax > 0)
+                {
+                    loadout.Add(new MissileSlot { missileId = "M10F", count = data.missilesMax });
+                }
+            }
+            
             currentGunAmmo = data.gunAmmoMax;
 
             if (string.IsNullOrEmpty(unitId))
@@ -244,6 +296,22 @@ namespace Zone5
         {
              ClearTrails();
              if (gameObject != null) Destroy(gameObject);
+        }
+
+        [ContextMenu("Debug Print Loadout")]
+        public void DebugPrintLoadout()
+        {
+            if (loadout == null)
+            {
+                Debug.Log($"[{unitId}] Loadout is NULL");
+                return;
+            }
+            Debug.Log($"[{unitId}] Loadout Report ({loadout.Count} slots):");
+            foreach (var slot in loadout)
+            {
+                Debug.Log($" - {slot.missileId}: {slot.count}");
+            }
+            Debug.Log($"Total Missiles: {GetTotalMissileCount()}");
         }
 
         public Transform ExhaustAnchor => exhaustAnchor != null ? exhaustAnchor : transform;

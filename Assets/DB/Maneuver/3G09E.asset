@@ -16,15 +16,16 @@ MonoBehaviour:
   displayName: Gentle Turn Left
   aliases:
   - 3G09E
-  allowedDirs: 2
-  defaultSprite: {fileID: 21300000, guid: 8a8f0e65bd131ae4d8cffa824fa99f3a, type: 3}
-  afterburnerSprite: {fileID: 21300000, guid: 826dd4a7e5659464491592eee1cf5e15, type: 3}
+  allowedDirs: 3
+  defaultSprite: {fileID: 21300000, guid: a4c443484b8728b499c95528fd588cb3, type: 3}
+  afterburnerSprite: {fileID: 21300000, guid: 8bcc94c859d453c4693cfc316ffba2b6, type: 3}
+  stance: 3
   kind: 0
   mainDir: 3
   usage: 0
   usedInAfterBurner: 1
   gForce: 3
-  machTier: 9
+  mach: 9
   evasionPenalty: 3
   pathMode: 1
   distanceFU: 1.2

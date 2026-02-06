@@ -22,15 +22,16 @@ MonoBehaviour:
   - AIR BRAKE
   - AIRBRAKE
   - BRAKE
-  allowedDirs: 1
-  defaultSprite: {fileID: 21300000, guid: 2d8701c9955406b4490a6653796c4dc9, type: 3}
+  allowedDirs: 2
+  defaultSprite: {fileID: 21300000, guid: eac2713c668880340b4a5ba1cf67b739, type: 3}
   afterburnerSprite: {fileID: 0}
+  stance: 4
   kind: 1
   mainDir: 1
   usage: 1
   usedInAfterBurner: 0
   gForce: 0
-  machTier: 6
+  mach: 6
   evasionPenalty: 3
   pathMode: 0
   distanceFU: 1

@@ -16,13 +16,16 @@ MonoBehaviour:
   displayName: 5G
   aliases:
   - 5G
-  allowedDirs: 7
+  allowedDirs: 2
+  defaultSprite: {fileID: 0}
+  afterburnerSprite: {fileID: 0}
+  stance: 4
   kind: 0
-  mainDir: 0
+  mainDir: 1
   usage: 0
   usedInAfterBurner: 0
   gForce: 5
-  machTier: 9
+  mach: 9
   evasionPenalty: 1
   pathMode: 2
   distanceFU: 2
@@ -53,3 +56,7 @@ MonoBehaviour:
   backfaceLerp: 0.2
   backfaceColor: {r: 0, g: 0, b: 0, a: 1}
   useSmooth: 1
+  trailDeformEnabled: 0
+  trailDeformMinScale: 0.35
+  trailDeformMaxRollDeg: 90
+  trailDeformMaxScale: 3

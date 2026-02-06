@@ -34,6 +34,7 @@ public class ManeuverProfileEditor : Editor
         DrawField("afterburnerSprite");
 
         DrawSection("Classification");
+        DrawField("stance");
         DrawField("kind");
         DrawField("mainDir");
         DrawField("usage");
@@ -41,7 +42,7 @@ public class ManeuverProfileEditor : Editor
 
         DrawSection("Stats");
         DrawField("gForce");
-        DrawField("machTier");
+        DrawField("mach");
         DrawField("evasionPenalty");
 
         DrawSection("Movement");

@@ -33,7 +33,7 @@ public class PilotRowView : MonoBehaviour
         if (colId != null) colId.text = rowId;
         if (colName != null)
         {
-            string name = string.IsNullOrWhiteSpace(unitProfileId) ? callsign : $"{callsign} ({unitProfileId})";
+            string name = string.IsNullOrWhiteSpace(unitProfileId) ? callsign : $"{callsign}\n({unitProfileId})";
             colName.text = name;
         }
         if (colStatus != null) colStatus.text = status;

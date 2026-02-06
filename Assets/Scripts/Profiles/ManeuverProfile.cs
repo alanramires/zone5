@@ -6,13 +6,28 @@ using UnityEngine.Serialization;
 namespace Zone5
 {
     [Flags]
-    public enum AllowedDirs
+    public enum Stance
     {
         None = 0,
-        Forward = 1 << 0,
-        Left = 1 << 1,
-        Right = 1 << 2,
-        Acrobatics = 1 << 3
+        [InspectorName("Flight Mode")]
+        FlightMode = 1 << 0,
+        [InspectorName("After Burner")]
+        AfterBurner = 1 << 1,
+        [InspectorName("Low Acrobatics")]
+        LowAcrobatics = 1 << 2,
+        [InspectorName("High Acrobatics")]
+        HighAcrobatics = 1 << 3
+    }
+
+    public enum AllowedDirs
+    {
+        [InspectorName("Break Right")]
+        BreakRight,
+        Right,
+        Forward,
+        Left,
+        [InspectorName("Break Left")]
+        BreakLeft
     }
 
     public enum TurnDir { F, D, E }
@@ -27,11 +42,15 @@ namespace Zone5
         ByPathXY
     }
 
-    public enum MachTier
+    public enum Mach
     {
+        [InspectorName("0.6")]
         M06 = 6,
+        [InspectorName("0.9")]
         M09 = 9,
+        [InspectorName("1.2")]
         M12 = 12,
+        [InspectorName("1.8")]
         M18 = 18
     }
 
@@ -86,11 +105,12 @@ namespace Zone5
         public string maneuverId;
         public string displayName;
         public string[] aliases;
-        public AllowedDirs allowedDirs = AllowedDirs.Forward | AllowedDirs.Left | AllowedDirs.Right;
+        public AllowedDirs allowedDirs = AllowedDirs.Forward;
         public Sprite defaultSprite;
         public Sprite afterburnerSprite;
 
         [Header("Classification")]
+        public Stance stance = Stance.FlightMode;
         public ManeuverKind kind = ManeuverKind.Move;
         public ManeuverMainDir mainDir = ManeuverMainDir.Undetermined;
         public ManeuverUsage usage = ManeuverUsage.Unlimited;
@@ -99,7 +119,8 @@ namespace Zone5
         [Header("Stats")]
         public float gForce;
         [FormerlySerializedAs("mach")]
-        public MachTier machTier = MachTier.M09;
+        [FormerlySerializedAs("machTier")]
+        public Mach mach = Mach.M12;
         [FormerlySerializedAs("evasionPenalty")]
         public EvasionPenaltyTier evasionPenalty = EvasionPenaltyTier.Zero;
 
@@ -144,7 +165,7 @@ namespace Zone5
 
         private static readonly HashSet<string> Warned = new();
 
-        public int Fuel => GetFuelForMach(machTier);
+        public int Fuel => GetFuelForMach(mach);
 
         public IEnumerable<string> GetAllKeys()
         {
@@ -597,14 +618,14 @@ namespace Zone5
             };
         }
 
-        private static int GetFuelForMach(MachTier tier)
+        private static int GetFuelForMach(Mach tier)
         {
             return tier switch
             {
-                MachTier.M06 => 1,
-                MachTier.M09 => 2,
-                MachTier.M12 => 3,
-                MachTier.M18 => 4,
+                Mach.M06 => 1,
+                Mach.M09 => 2,
+                Mach.M12 => 3,
+                Mach.M18 => 4,
                 _ => 1
             };
         }

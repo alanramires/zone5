@@ -19,7 +19,7 @@ MonoBehaviour:
   maxFuel: 40
   missilesMax: 6
   gunAmmoMax: 4
-  vulcanUnlimited: 1
+  vulcanUnlimited: 0
   tokenLengthFU: 1
   colliderSize: {x: 1.8, y: 1.8}
   colliderOffset: {x: 0, y: 0}

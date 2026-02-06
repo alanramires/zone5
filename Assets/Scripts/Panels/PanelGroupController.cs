@@ -495,9 +495,9 @@ namespace Zone5
         {
             string name = string.IsNullOrWhiteSpace(profile.displayName) ? profile.maneuverId : profile.displayName;
             string g = FormatG(profile.gForce);
-            string mach = FormatMach(profile.machTier);
+            string mach = FormatMach(profile.mach);
             int evasion = (int)profile.evasionPenalty;
-            return $"{name}\n{g}G {mach} Evasion: -{evasion}";
+            return $"{name}\n{g}G | {mach} | Eva: -{evasion}";
         }
 
         private static string FormatG(float g)
@@ -508,7 +508,7 @@ namespace Zone5
             return g.ToString("0.0", CultureInfo.InvariantCulture);
         }
 
-        private static string FormatMach(MachTier tier)
+        private static string FormatMach(Mach tier)
         {
             float m = ((int)tier) / 10f;
             return $"{m.ToString("0.0", CultureInfo.InvariantCulture)}M";

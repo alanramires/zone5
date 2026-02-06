@@ -16,15 +16,16 @@ MonoBehaviour:
   displayName: Bank Turn Right
   aliases:
   - 3G12D
-  allowedDirs: 4
-  defaultSprite: {fileID: 21300000, guid: d9b53ebb1c0583144b5b385042126b1b, type: 3}
-  afterburnerSprite: {fileID: 21300000, guid: 0144200b3aa3be944bfa1b3ca41047a9, type: 3}
+  allowedDirs: 1
+  defaultSprite: {fileID: 21300000, guid: a83a2fc3e0edd1348b84a19c3b25a708, type: 3}
+  afterburnerSprite: {fileID: 21300000, guid: fd315d99284cfeb4caa026cac2a070ed, type: 3}
+  stance: 3
   kind: 0
   mainDir: 2
   usage: 0
   usedInAfterBurner: 1
   gForce: 3
-  machTier: 12
+  mach: 12
   evasionPenalty: 3
   pathMode: 1
   distanceFU: 1.9

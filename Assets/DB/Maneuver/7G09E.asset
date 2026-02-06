@@ -16,15 +16,16 @@ MonoBehaviour:
   displayName: Sharp Turn Left
   aliases:
   - 7G09E
-  allowedDirs: 2
-  defaultSprite: {fileID: 21300000, guid: eca30c69e60f9804e80d2c0b2ef70f7b, type: 3}
+  allowedDirs: 4
+  defaultSprite: {fileID: -6867262177403235028, guid: df69126267730f14c8cf78d0a5bf7d78, type: 3}
   afterburnerSprite: {fileID: 0}
+  stance: 1
   kind: 0
   mainDir: 3
   usage: 0
   usedInAfterBurner: 0
   gForce: 3
-  machTier: 9
+  mach: 9
   evasionPenalty: 3
   pathMode: 1
   distanceFU: 1.45

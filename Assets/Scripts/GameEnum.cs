@@ -11,7 +11,7 @@ namespace Zone5
         {
             public const int HpInitial = 3;
             public const int FuelInitial = 40;
-            public const int MissilesInitial = 6;
+            public const int MissilesInitial = 8;
             public const int GunInitial = 4;
         }
         // 11 estados do turno (MVP + base pro avançado)

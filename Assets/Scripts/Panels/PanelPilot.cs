@@ -183,7 +183,7 @@ public class PanelPilot : MonoBehaviour
     {
         string callsign = !string.IsNullOrWhiteSpace(unit.callSign) ? unit.callSign : unit.unitId;
         if (txtCallsign != null)
-            txtCallsign.text = $"Callsign: \"{callsign}\"";
+            txtCallsign.text = callsign;
 
         if (imgAircraft != null)
         {
@@ -207,6 +207,12 @@ public class PanelPilot : MonoBehaviour
             fuelFill.fillAmount = maxFuel > 0 ? (float)curFuel / maxFuel : 0f;
 
         int maxMissiles = unit.UnitData != null ? unit.UnitData.missilesMax : missileBlocks.Count;
+        // [FIX] Ensure max covers the ACTUAL current loadout (e.g. 8 missiles on a 6-max profile)
+        maxMissiles = Mathf.Max(maxMissiles, unit.currentMissiles);
+
+        // [MODIFIED] Dynamic expansion if we have more missiles than blocks
+        EnsureBlockCapacity(missileBlocks, _missileColors, maxMissiles);
+        
         int curMissiles = Mathf.Clamp(unit.currentMissiles, 0, maxMissiles);
         if (txtMissileCount != null) txtMissileCount.text = $"x{curMissiles}";
         ApplyBlocks(missileBlocks, _missileColors, curMissiles, maxMissiles, hideEmptyMissiles);
@@ -230,7 +236,7 @@ public class PanelPilot : MonoBehaviour
 
     private void SetEmpty()
     {
-        if (txtCallsign != null) txtCallsign.text = "Callsign: \"---\"";
+        if (txtCallsign != null) txtCallsign.text = "---";
         if (txtHpQty != null) txtHpQty.text = "0/0";
         if (txtFuelQty != null) txtFuelQty.text = "0/0";
         if (txtMissileCount != null) txtMissileCount.text = "x0";
@@ -272,6 +278,25 @@ public class PanelPilot : MonoBehaviour
             var c = (i < baseColors.Count) ? baseColors[i] : img.color;
             c.a = active ? 1f : inactiveAlpha;
             img.color = c;
+        }
+    }
+
+    private void EnsureBlockCapacity(List<Image> blocks, List<Color> colors, int count)
+    {
+        if (blocks == null || blocks.Count == 0) return;
+        if (count <= blocks.Count) return;
+
+        var template = blocks[0];
+        if (template == null) return;
+
+        while (blocks.Count < count)
+        {
+            var newImg = Instantiate(template, template.transform.parent);
+            newImg.name = template.name.Replace("0", "") + blocks.Count; 
+            newImg.enabled = true;
+            
+            blocks.Add(newImg);
+            colors.Add(colors.Count > 0 ? colors[0] : newImg.color); 
         }
     }
 

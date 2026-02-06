@@ -16,15 +16,16 @@ MonoBehaviour:
   displayName: Sweeping Turn Right
   aliases:
   - 3G06D
-  allowedDirs: 4
-  defaultSprite: {fileID: 21300000, guid: 8ca0fd7cf928b304b8402bc7b8da4286, type: 3}
-  afterburnerSprite: {fileID: 21300000, guid: b9cd5ef89db8a6b469e789e4a511076e, type: 3}
+  allowedDirs: 1
+  defaultSprite: {fileID: 21300000, guid: 8895152f60b1b974e8c00669ca3b476f, type: 3}
+  afterburnerSprite: {fileID: 21300000, guid: fedf2777b933f6a4cad997e8c5d8261e, type: 3}
+  stance: 3
   kind: 0
   mainDir: 2
   usage: 0
   usedInAfterBurner: 1
   gForce: 3
-  machTier: 6
+  mach: 6
   evasionPenalty: 3
   pathMode: 1
   distanceFU: 1

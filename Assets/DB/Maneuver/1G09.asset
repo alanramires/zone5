@@ -17,15 +17,16 @@ MonoBehaviour:
   aliases:
   - 1G09F
   - 1G09
-  allowedDirs: 1
-  defaultSprite: {fileID: 21300000, guid: 1959f9ecaf355404db57a4e016b45f2a, type: 3}
-  afterburnerSprite: {fileID: 21300000, guid: 41bf3fa9413c895478aaa69fc0dbada0, type: 3}
+  allowedDirs: 2
+  defaultSprite: {fileID: 21300000, guid: 8070fc7e1b6026c478ab239b408d4ffb, type: 3}
+  afterburnerSprite: {fileID: 21300000, guid: 5e443063551784e4393bf9b3cd42629b, type: 3}
+  stance: 3
   kind: 0
   mainDir: 1
   usage: 0
   usedInAfterBurner: 1
   gForce: 1
-  machTier: 9
+  mach: 9
   evasionPenalty: 3
   pathMode: 0
   distanceFU: 1.5

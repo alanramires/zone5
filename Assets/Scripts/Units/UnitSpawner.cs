@@ -258,6 +258,9 @@ namespace Zone5
                 Color softColor = GetSoftTeamColor(teamColor);
                 unit.ApplyUnitData(config.unitData, softColor, playerId, config.teamId);
                 
+                // [NEW] Set specific missile loadout as per user request
+                unit.SetLoadout(GetDefaultLoadout());
+                
                 // Init History (Turn 0)
                 unit.maneuverHistory.Add(new AircraftUnit.FlightLog 
                 { 
@@ -357,6 +360,21 @@ namespace Zone5
             int index = Mathf.Abs(playerId - 1) % defaultCallsigns.Length;
             string name = defaultCallsigns[index];
             return string.IsNullOrWhiteSpace(name) ? $"Pilot {playerId}" : name;
+        }
+
+        private List<AircraftUnit.MissileSlot> GetDefaultLoadout()
+        {
+            // 2x M10F, 1x M10L1, 1x M10L2, 1x M10R1, 1x M10R2, 1x M10S1, 1x M10S2
+            return new List<AircraftUnit.MissileSlot>
+            {
+                new AircraftUnit.MissileSlot { missileId = "M10F", count = 2 },
+                new AircraftUnit.MissileSlot { missileId = "M10L1", count = 1 },
+                new AircraftUnit.MissileSlot { missileId = "M10L2", count = 1 },
+                new AircraftUnit.MissileSlot { missileId = "M10R1", count = 1 },
+                new AircraftUnit.MissileSlot { missileId = "M10R2", count = 1 },
+                new AircraftUnit.MissileSlot { missileId = "M10S1", count = 1 },
+                new AircraftUnit.MissileSlot { missileId = "M10S2", count = 1 }
+            };
         }
 
         private static void OrientUnit(AircraftUnit unit, Vector3 desiredForward)

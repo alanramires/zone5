@@ -17,15 +17,16 @@ MonoBehaviour:
   aliases:
   - 3G18D
   - 3GD
-  allowedDirs: 4
-  defaultSprite: {fileID: 21300000, guid: 2a37b8cb165fc7d44b904f976beadaf9, type: 3}
-  afterburnerSprite: {fileID: 21300000, guid: 64eb11bcae3d7514d957922a5839161b, type: 3}
+  allowedDirs: 1
+  defaultSprite: {fileID: 21300000, guid: 3e476a41025fb8447bcd3cdaf663681d, type: 3}
+  afterburnerSprite: {fileID: 21300000, guid: 98bab20c7ccdffe46a81a23ac0134a6a, type: 3}
+  stance: 3
   kind: 0
   mainDir: 2
   usage: 0
   usedInAfterBurner: 1
   gForce: 3
-  machTier: 18
+  mach: 18
   evasionPenalty: 2
   pathMode: 1
   distanceFU: 2.8
