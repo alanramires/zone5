@@ -257,6 +257,7 @@ namespace Zone5
 
                 Color softColor = GetSoftTeamColor(teamColor);
                 unit.ApplyUnitData(config.unitData, softColor, playerId, config.teamId);
+                unit.currentStance = Stance.FlightMode;
                 
                 // [NEW] Set specific missile loadout as per user request
                 unit.SetLoadout(GetDefaultLoadout());
@@ -270,6 +271,13 @@ namespace Zone5
                     GForce = 1, 
                     Speed = 1.0f 
                 });
+                unit.AddFlightHistoryEntry(
+                    turnIndex: 0,
+                    pos: 0,
+                    dir: AllowedDirs.Forward,
+                    speed: "12",
+                    stance: Stance.FlightMode,
+                    code: "1G12");
 
                 Debug.Log($"Spawned {unit.unitId} callSign={unit.callSign} team={config.teamId} playerId={playerId}");
 

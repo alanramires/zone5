@@ -14,6 +14,9 @@ namespace Zone5
         public string callSign;
         public int playerId;
 
+        [Header("Stance (Runtime)")]
+        public Stance currentStance = Stance.FlightMode;
+
         public int currentHp;
         public int currentFuel;
         
@@ -34,6 +37,33 @@ namespace Zone5
 
         public List<FlightLog> maneuverHistory = new List<FlightLog>();
         public string LastManeuver => (maneuverHistory != null && maneuverHistory.Count > 0) ? maneuverHistory[maneuverHistory.Count - 1].ManeuverCode : "";
+
+        [System.Serializable]
+        public struct FlightHistoryEntry
+        {
+            public int TurnIndex;
+            public int Pos;
+            public AllowedDirs Dir;
+            public string Speed;
+            public Stance Stance;
+            public string Code;
+        }
+
+        public List<FlightHistoryEntry> flightHistory = new List<FlightHistoryEntry>();
+
+        public void AddFlightHistoryEntry(int turnIndex, int pos, AllowedDirs dir, string speed, Stance stance, string code)
+        {
+            if (flightHistory == null) flightHistory = new List<FlightHistoryEntry>();
+            flightHistory.Add(new FlightHistoryEntry
+            {
+                TurnIndex = turnIndex,
+                Pos = pos,
+                Dir = dir,
+                Speed = speed,
+                Stance = stance,
+                Code = code
+            });
+        }
 
         [System.Serializable]
         public class MissileSlot

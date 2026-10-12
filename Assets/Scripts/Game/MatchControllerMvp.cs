@@ -230,6 +230,10 @@ namespace Zone5
                 };
                 unit.maneuverHistory.Add(log);
 
+                var codes = GetManeuverCodesFromRow(row);
+                if (codes.Count > 0)
+                    AddFlightHistoryEntries(unit, codes, turnManager != null ? turnManager.sheet.turnIndex : 0);
+
                 TurnDir dir = ParseDirFromRaw(raw);
                 if (profile != null)
                     ExecuteManeuver(unit, profile, dir, GetTeamColor(unit.teamId), ref moved);
@@ -892,6 +896,72 @@ namespace Zone5
                 'E' => TurnDir.E,
                 'F' => TurnDir.F,
                 _ => TurnDir.F
+            };
+        }
+
+        private static List<string> GetManeuverCodesFromRow(TurnSheet.PlayerRow row)
+        {
+            var list = new List<string>();
+            if (row == null) return list;
+            string combo = row.maneuverComboRaw;
+            if (string.IsNullOrWhiteSpace(combo))
+            {
+                if (!string.IsNullOrWhiteSpace(row.maneuverRaw))
+                    list.Add(MvpRules.SanitizeManeuver(row.maneuverRaw));
+                return list;
+            }
+
+            var parts = combo.Split('+');
+            for (int i = 0; i < parts.Length; i++)
+            {
+                string p = parts[i];
+                if (string.IsNullOrWhiteSpace(p)) continue;
+                string code = MvpRules.SanitizeManeuver(p);
+                if (!string.IsNullOrWhiteSpace(code))
+                    list.Add(code);
+            }
+
+            if (list.Count == 0 && !string.IsNullOrWhiteSpace(row.maneuverRaw))
+                list.Add(MvpRules.SanitizeManeuver(row.maneuverRaw));
+
+            return list;
+        }
+
+        private void AddFlightHistoryEntries(AircraftUnit unit, List<string> codes, int turnIndex)
+        {
+            if (unit == null || codes == null || codes.Count == 0) return;
+            for (int i = 0; i < codes.Count; i++)
+            {
+                string code = codes[i];
+                ManeuverProfile profile = ResolveManeuverProfile(code);
+                Stance stance = profile != null ? profile.stance : Stance.FlightMode;
+                AllowedDirs dir = profile != null ? profile.allowedDirs : MapDirFromRaw(code);
+                string speed = ParseSpeedFromCode(code);
+                unit.AddFlightHistoryEntry(turnIndex, i, dir, speed, stance, code);
+            }
+        }
+
+        private static string ParseSpeedFromCode(string code)
+        {
+            string s = (code ?? "").Trim().ToUpperInvariant();
+            if (s.Length < 2) return "";
+            string last2 = s.Substring(s.Length - 2, 2);
+            if (char.IsDigit(last2[0]) && char.IsDigit(last2[1]))
+                return last2;
+            return "";
+        }
+
+        private static AllowedDirs MapDirFromRaw(string raw)
+        {
+            string s = (raw ?? "").Trim().ToUpperInvariant();
+            if (string.IsNullOrEmpty(s)) return AllowedDirs.Forward;
+            char last = s[s.Length - 1];
+            return last switch
+            {
+                'D' => AllowedDirs.Right,
+                'E' => AllowedDirs.Left,
+                'F' => AllowedDirs.Forward,
+                _ => AllowedDirs.Forward
             };
         }
 

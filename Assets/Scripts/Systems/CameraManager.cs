@@ -13,6 +13,11 @@ namespace Zone5
         public float maxSize = 17f;
         public float zoomSpeed = 1.5f;
 
+        [Header("Bounds")]
+        public bool clampToBounds = true;
+        public Collider2D boundsCollider;
+        public Renderer boundsRenderer;
+
         [Header("Pan")]
         public float dragSpeed = 1f;
 
@@ -31,6 +36,9 @@ namespace Zone5
 
             HandleZoom();
             HandlePan();
+
+            if (clampToBounds)
+                ClampCameraToBounds();
         }
 
         private void HandleZoom()
@@ -83,7 +91,40 @@ namespace Zone5
             if (dragSpeed != 1f)
                 move *= dragSpeed;
 
-            transform.position += move;
+            targetCamera.transform.position += move;
+        }
+
+        private void ClampCameraToBounds()
+        {
+            Bounds bounds;
+            if (boundsCollider != null)
+                bounds = boundsCollider.bounds;
+            else if (boundsRenderer != null)
+                bounds = boundsRenderer.bounds;
+            else
+                return;
+
+            float halfH = targetCamera.orthographicSize;
+            float halfW = halfH * targetCamera.aspect;
+
+            Vector3 pos = targetCamera.transform.position;
+
+            float minX = bounds.min.x + halfW;
+            float maxX = bounds.max.x - halfW;
+            float minY = bounds.min.y + halfH;
+            float maxY = bounds.max.y - halfH;
+
+            if (minX > maxX)
+                pos.x = bounds.center.x;
+            else
+                pos.x = Mathf.Clamp(pos.x, minX, maxX);
+
+            if (minY > maxY)
+                pos.y = bounds.center.y;
+            else
+                pos.y = Mathf.Clamp(pos.y, minY, maxY);
+
+            targetCamera.transform.position = new Vector3(pos.x, pos.y, targetCamera.transform.position.z);
         }
     }
 }
