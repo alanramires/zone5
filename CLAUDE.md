@@ -10,7 +10,7 @@ Zone 5 is a turn-based, simultaneous-resolution 2D air combat game (hotseat MVP)
 
 There is no CLI build, lint or test setup. Work happens in the Unity Editor: open the project, load `SampleScene` and press Play. No test assemblies or `.asmdef` files exist. Everything compiles into `Assembly-CSharp` / `Assembly-CSharp-Editor`, so a compile error anywhere breaks the whole project. To check compilation you need Unity (or the IDE diagnostics against the generated `.csproj`). The generated `.csproj`/`.slnx` files are not authoritative.
 
-Commits follow the pattern `v0.0.N - short description` and are summarized in `docs/changelog.md`.
+Commits follow the pattern `v0.0.N - short description` and are summarized in `docs/outros/changelog.md` (old cycle, up to v0.0.15). Since 2026-10-11 a new numbering cycle restarted at v0.0.1 (the old v0.0.x tags still exist), with one closing note per session in `docs/fechamentos/vX.Y.Z.md`.
 
 ## Architecture
 
@@ -35,7 +35,8 @@ Maneuver/weapon input is string-coded (e.g. maneuver codes joined with `+`, miss
 ## Design docs
 
 - `REFACTOR_PLAN.md` is the active refactor roadmap (v1.1, 2026-04-21). It covers interfaces and a stack-based FSM (phase 0), breaking up `MatchControllerMvp` into resolvers (1), removing the legacy Def/Catalog formats (2), wiring the stance/direction cards to maneuver selection (3), and DI/cleanup (4). As of its writing, none of the phases had been implemented. Check it before making structural changes.
-- `docs/` (PT-BR) contains the game rules (`Zone 5 - Air Combat rules.md`, `combate.md`, `manobras.md`), the turn FSM description and an example of a full combat round with scoring (`maquina de estados.md`), and per-file notes (`notas do sistema.md`, `controllers.md`, which may be outdated).
+- `docs/pendencias/` holds open findings/evaluations (e.g. `avaliacao_fsm.md`: fixed waits per turn, full tactical-panel rebuilds).
+- `docs/outros/` (PT-BR) contains the game rules (`Zone 5 - Air Combat rules.md`, `combate.md`, `manobras.md`), the turn FSM description and an example of a full combat round with scoring (`maquina de estados.md`), and per-file notes (`notas do sistema.md`, `controllers.md`, which may be outdated).
 
 ## Unity conventions
 
