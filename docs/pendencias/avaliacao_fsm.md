@@ -2,6 +2,20 @@
 
 Data: 11/10/2026.
 
+> **Status em 12/10/2026.** Esta avaliação descreve o código atual, o `TurnManager` com o `MatchControllerMvp`. A FSM nova do tabuleiro (`docs/fsm/fsm_tabuleiro.md`) muda o destino de cada achado:
+>
+> | # | Achado | Destino |
+> |---|---|---|
+> | 1 | Esperas programadas | Absorvido pela divisão entre resolver e apresentar, com controle de velocidade no debug. |
+> | 2 | Painel tático reconstrói a lista | **Continua valendo** (UI). |
+> | 3 | Alocações nos rastros | **Continua valendo** (apresentação). |
+> | 4 | Buscas globais e alocações | Absorvido em parte pela foto do tabuleiro e pelo registro por slot; o código antigo segue com o problema. |
+> | 5 | Transições aninhadas | Virou requisito da FSM nova (seção "Transições à prova de reentrada"). |
+> | 6 | Filtro da seleção de mísseis | Obsoleto: o `TurnManeuverPanel` será substituído. |
+> | 7 | Colisão quadrática | Irrelevante: no máximo 8 aviões. |
+>
+> A `SampleScene` citada abaixo agora se chama `Batalha`.
+
 ## Escopo e limites
 
 Investigação estática do código em `Assets/Scripts` e da configuração de `Assets/Scenes/SampleScene.unity`, cena habilitada em `EditorBuildSettings`. Não foram feitas alterações na implementação nem capturas do Unity Profiler. Os custos de CPU, memória e renderização descritos são candidatos a gargalos, não medições de desempenho.

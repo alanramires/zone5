@@ -6,3 +6,4 @@ Série **z**, iniciada em 11/10/2026. O detalhe de cada versão fica em `docs/fe
 |---|---|---|---|
 | z0.0.1 | 11/10/2026 | Retomada: cartas de stance/direção no lugar do cockpit + Unity 6000.4.3 | [z0.0.1](docs/fechamentos/z0.0.1.md) |
 | z0.0.2 | 11/10/2026 | Volta a compilar (sem `ButtonSelectionGroup`) + Unity 6000.5.3 + ritual de fechamento | [z0.0.2](docs/fechamentos/z0.0.2.md) |
+| z0.1.0 | 12/10/2026 | O tabuleiro manda, o jogador contribui: cenas, `PartidaConfig` e a FSM do tabuleiro | [z0.1.0](docs/fechamentos/z0.1.0.md) |
