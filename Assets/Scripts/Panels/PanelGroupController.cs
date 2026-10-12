@@ -46,23 +46,13 @@ namespace Zone5
         [SerializeField] private GameObject arrowStep0;
         [SerializeField] private GameObject arrowStep1;
         [SerializeField] private GameObject arrowSingle;
-        [Header("Selection Group")]
-        [SerializeField] private ButtonSelectionGroup selectionGroup;
+        [Header("Confirm Text")]
+        [SerializeField] private Color normalConfirmTextColor = Color.black;
 
         private UnitSpawner _spawner;
         private bool _clearSelectionOnce;
         private bool _confirmVisible;
         private GameObject _lastSelection;
-
-        private void Awake()
-        {
-            if (selectionGroup == null)
-            {
-                selectionGroup = GetComponent<ButtonSelectionGroup>();
-                if (selectionGroup == null)
-                    selectionGroup = GetComponentInChildren<ButtonSelectionGroup>();
-            }
-        }
 
         // ...
 
@@ -366,27 +356,11 @@ namespace Zone5
                     buttonConfirm.interactable = false;
                     buttonConfirm.interactable = true;
 
-                    // Apply Correct Visuals (Text/Group) - DO THIS LAST
-                    if (selectionGroup != null)
-                    {
-                        // Debug.Log($"[PanelGroup] Clearing SelectionGroup. Options Count: {selectionGroup.GetOptionsCount()}");
-                        selectionGroup.ClearSelection();
-                        
-                        // Force check if Confirm is actually being reset by group
-                        // var confirmOption = selectionGroup.GetOptionForButton(buttonConfirm);
-                        // if (confirmOption == null) Debug.LogWarning("[PanelGroup] Confirm button NOT found in SelectionGroup options!");
-                    }
-                    else
-                    {
-                        Debug.LogWarning("[PanelGroup] SelectionGroup missing! Text color might be wrong.");
-                    }
-
-                    // 5. ULTIMATE FALLBACK: Manually fix text if Group failed
+                    DeselectIfSelected(buttonConfirm);
                     var text = buttonConfirm.GetComponentInChildren<TMP_Text>(true);
                     if (text != null)
                     {
-                        // Use configured color if possible, otherwise default to black
-                        text.color = selectionGroup != null ? selectionGroup.NormalTextColor : Color.black;
+                        text.color = normalConfirmTextColor;
                         text.fontStyle = FontStyles.Normal;
                     }
                 }

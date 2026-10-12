@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Zone 5 is a turn-based, simultaneous-resolution 2D air combat game (hotseat MVP) built in **Unity 6000.4.3f1** with URP and the new Input System. All gameplay code lives in `Assets/Scripts` under the `Zone5` namespace. The only scene is `Assets/Scenes/SampleScene.unity`. The user writes in Brazilian Portuguese; code comments, docs and commit messages mix PT-BR and English.
+Zone 5 is a turn-based, simultaneous-resolution 2D air combat game (hotseat MVP) built in **Unity 6000.5.3f1** with URP and the new Input System. All gameplay code lives in `Assets/Scripts` under the `Zone5` namespace. The only scene is `Assets/Scenes/SampleScene.unity`. The user writes in Brazilian Portuguese; code comments, docs and commit messages mix PT-BR and English.
 
 ## Building / running
 
