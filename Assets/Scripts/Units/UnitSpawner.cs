@@ -21,6 +21,9 @@ namespace Zone5
             public Vector2 basePos = Vector2.zero;
             public Vector2 spawnDirection = Vector2.right; // (1,0) = right, (-1,0) = left
             public List<string> pilotNames;
+
+            // Preenchido pelo PartidaConfig (playerId = slotId + 1); vazio = numeração sequencial
+            [NonSerialized] public List<int> playerIds;
         }
 
         [Header("One Prefab to rule them all")]
@@ -68,6 +71,9 @@ namespace Zone5
                 SetupMvpDefaults();
             }
 
+            if (PartidaConfig.TryConsume(out var slots))
+                ApplyPartidaConfig(slots);
+
             if (aircraftPrefab == null)
             {
                 Debug.LogError("[UnitSpawner] aircraftPrefab not assigned.");
@@ -112,6 +118,34 @@ namespace Zone5
             t1.spawnDirection = Vector2.left;
             t1.pilotNames = new List<string> { "Uri", "Boris", "Dimitri" };
             teams.Add(t1);
+        }
+
+        // Os times da cena são o molde (perfil, lado, direção); o PartidaConfig só define quem voa.
+        private void ApplyPartidaConfig(PartidaConfig.Slot[] slots)
+        {
+            foreach (var team in teams)
+            {
+                team.pilotNames = new List<string>();
+                team.playerIds = new List<int>();
+            }
+
+            foreach (var slot in slots)
+            {
+                if (slot == null || !slot.IsOccupied) continue;
+
+                TeamConfig team = teams.Find(t => t.teamId == slot.TeamId);
+                if (team == null)
+                {
+                    Debug.LogWarning($"[UnitSpawner] Sem TeamConfig para teamId={slot.TeamId}; slot {slot.slotId} ignorado.");
+                    continue;
+                }
+
+                team.pilotNames.Add(slot.callsign);
+                team.playerIds.Add(slot.PlayerId);
+            }
+
+            foreach (var team in teams)
+                team.count = team.playerIds.Count;
         }
 
         private void SpawnTeam(TeamConfig config)
@@ -244,7 +278,9 @@ namespace Zone5
 
                 var unit = Instantiate(aircraftPrefab, pos, Quaternion.identity, transform);
 
-                int playerId = nextPlayerId++;
+                int playerId = (config.playerIds != null && i < config.playerIds.Count)
+                    ? config.playerIds[i]
+                    : nextPlayerId++;
                 if (config.pilotNames != null && i < config.pilotNames.Count)
                     unit.callSign = config.pilotNames[i];
                 else 
