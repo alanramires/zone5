@@ -10,7 +10,7 @@ Zone 5 is a turn-based, simultaneous-resolution 2D air combat game (hotseat MVP)
 
 There is no CLI build, lint or test setup. Work happens in the Unity Editor: open the project, load `SampleScene` and press Play. No test assemblies or `.asmdef` files exist. Everything compiles into `Assembly-CSharp` / `Assembly-CSharp-Editor`, so a compile error anywhere breaks the whole project. To check compilation you need Unity (or the IDE diagnostics against the generated `.csproj`). The generated `.csproj`/`.slnx` files are not authoritative.
 
-Commits follow the pattern `v0.0.N - short description` and are summarized in `docs/outros/changelog.md` (old cycle, up to v0.0.15). Since 2026-10-11 a new numbering cycle restarted at v0.0.1 (the old v0.0.x tags still exist), with one closing note per session in `docs/fechamentos/vX.Y.Z.md`.
+Versioning: the old series `v0.0.1`–`v0.0.15` (tags `v0.0.x`, summarized in `docs/outros/changelog.md`) is closed. Since 2026-10-11 the project uses the **z-series** (`z0.0.1`, `z0.0.2`, …): commits are `zX.Y.Z - short description`, each version gets a git tag of the same name and a closing note in `docs/fechamentos/zX.Y.Z.md`.
 
 ## Architecture
 
